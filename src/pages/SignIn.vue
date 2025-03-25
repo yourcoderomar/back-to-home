@@ -13,6 +13,10 @@
           :title="'Sign In'"
           :message="'Sign in to access your account and stay connected.'"
           :formFields="formFields"
+          :buttonText="'Sign In'"
+          :redirectMessage="'Don\'t have an account?'"
+          :redirectPath="'/signup'"
+          :redirectLinkText="'Sign Up'"
           @formSubmitted="handleSignIn"
         />
       </div>

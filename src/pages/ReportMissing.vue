@@ -1,40 +1,31 @@
 <template>
   <div :class="{ 'blurred': showForm }">
     <NavBar />
-    <q-page-container>
-      <HeroSection :title="'Report a Missing Person'" />
+    <q-page-container>  
+      <HeroSection :title="'Report a Found Person'" />
 
-      <div class="cta-container">
-        <h2>Why Your Report Matters:</h2>
-        <ul>
-          <li>
-            <span>Time is Critical:</span> The sooner a missing person is reported, the higher the chances of finding them. Every second counts.
-          </li>
-          <li>
-            <span>Every Detail Helps:</span> Even the smallest piece of information—like the last known location, clothing, or recent activity—can be crucial in a search effort.
-          </li>
-          <li>
-            <span>A Community Effort:</span> When communities come together, missing persons are found faster. Your report could be the key to reuniting a family.
-          </li>
-        </ul>
+<div class="cta-container">
+    <h2>Report a Found Person :</h2>
+    <ul>
+        <li><span>Help Reunite Families:</span> If you've found someone who appears lost and doesn't know where they belong, report it here.</li>
+        <li><span>Provide Key Details:</span> Enter information such as their appearance, estimated age, location where they were found, and any identifying features.</li>
+        <li><span>Act Quickly:</span> Your report could help connect them with their loved ones as soon as possible.</li>
+    </ul>
 
-        <h2>What You Can Do:</h2>
-        <ul>
-          <li>
-            <span>Report Immediately:</span> If someone you know has gone missing, don't wait—file a report as soon as possible.
-          </li>
-          <li>
-            <span>Share Any Information:</span> If you have seen or heard anything that could help locate a missing person, your input is valuable.
-          </li>
-          <li>
-            <span>Don't Hesitate:</span> Even if you are unsure whether the information is relevant, it's better to report than to stay silent. Your details could be the missing piece.
-          </li>
-        </ul>
+    <h2>How It Works :</h2>
+    <ul>
+        <li><span>Describe the Person:</span> Provide as much detail as possible to help with identification.</li>
+        <li><span>Submit the Report:</span> Our system will store the details and check for possible matches with missing persons.</li>
+        <li><span>Assist in Reunification:</span> If a match is found, authorities or family members will be able to take the next steps.</li>
+    </ul>
 
-        <h2>Take Action Now!</h2>
-        <p>If you have any details about a missing person, please submit a report. Every report is reviewed with urgency, and your information could make a life-changing difference.</p>
-        <q-btn label="Report Now" @click="showForm = true" class="submit" />
-      </div>
+    <h2>Submit a Report Now!</h2>
+    <p>If you've encountered someone who seems lost, don't hesitate to report it. Your report could help bring them home.</p>
+    <q-btn label="Report Now" @click="showForm = true" class="submit" />
+</div>
+
+
+
 
       <!-- Form Dialog -->
       <q-dialog v-model="showForm" persistent>
@@ -47,7 +38,7 @@
             :link-text="'Already filled a report?'"
             :link-to="'/'"
             @formSubmitted="handleFormSubmission"
-            @closeForm="showForm = false"
+            @closeForm="showForm = false" 
             class="form"
           />
         </div>
@@ -79,16 +70,16 @@ export default {
     return {
       showForm: false,
       formValues: {
-        report_type: "missing", // Auto-set
+        report_type: "found", // Auto-set
         reporter_name: "",
         reporter_contact: "",
-        reporter_status: "",
+        report_status: "open",
         user_id: "",
-        missing_person_name: "",
-        age: "",
+        found_person_name: "",
+        age_estimate: "",
         gender: "",
-        last_seen_location: "",
-        last_seen_date: "",
+        found_location: "",
+        found_date: "",
         description: "",
         photo_url: null, // Changed from report_image to photo_url
         created_at: new Date().toISOString(),
@@ -96,12 +87,11 @@ export default {
       fields: [
         { name: 'reporter_name', label: 'Your Name', type: 'text', required: true, width: '100%', rules: [val => !!val || 'Name is required'] },
         { name: 'reporter_contact', label: 'Your Contact', type: 'text', required: true, width: '100%', rules: [val => !!val || 'Contact is required'] },
-        { name: 'reporter_status', label: 'Your Status', type: 'text', width: '100%', rules: [val => !!val || 'Status is required'] },
-        { name: 'missing_person_name', label: 'Missing Person Name', type: 'text', required: true, width: '100%', rules: [val => !!val || 'Name is required'] },
-        { name: 'age', label: 'Age', type: 'number', width: '40%', rules: [val => !!val || 'Age is required', val => (val > 0 && val < 150) || 'Enter a valid age'] },
+        { name: 'found_person_name', label: 'Found Person Name', type: 'text', required: true, width: '100%', rules: [val => !!val || 'Name is required'] },
+        { name: 'age_estimate', label: 'Age Estimate', type: 'number', width: '40%', rules: [val => !!val || 'Age is required', val => (val > 0 && val < 150) || 'Enter a valid age'] },
         { name: 'gender', label: 'Gender', type: 'select', options: ['male', 'memale'], width: '40%', rules: [val => !!val || 'Gender is required'] },
-        { name: 'last_seen_location', label: 'Last Seen Location', type: 'text', width: '100%', rules: [val => !!val || 'Location is required'] },
-        { name: 'last_seen_date', label: 'Last Seen Date', type: 'date', width: '100%', rules: [val => !!val || 'Date is required'] },
+        { name: 'found_location', label: 'Found Location', type: 'text', width: '100%', rules: [val => !!val || 'Location is required'] },
+        { name: 'found_date', label: 'Found Date', type: 'date', width: '100%', rules: [val => !!val || 'Date is required'] },
         { name: 'description', label: 'Description', type: 'textarea', width: '100%', rules: [val => !!val || 'Description is required'] },
         { name: 'photo_url', label: 'Upload Image', type: 'file', width: '100%' },
       ],
@@ -114,7 +104,7 @@ export default {
       console.error('Error getting user:', error.message);
       this.$refs.toast.showToast('Please log in to submit a report.', 'error');
       // Optionally redirect to login page
-      this.$router.push('/login');
+      this.$router.push('/SignIn');
       return;
     }
     if (user) {
@@ -145,13 +135,16 @@ export default {
 
           console.log("📤 Uploading file to Supabase at path:", filePath);
 
-          const { error: uploadError } = await supabase.storage
-            .from('missingimages')
-            .upload(filePath, file, { 
-              cacheControl: '3600', 
-              upsert: false,
-              contentType: file.type
-            });
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.error("❌ User not authenticated");
+            this.$refs.toast.showToast('Please log in to upload images.', 'error');
+            return;
+          }
+
+          const { error: uploadError} = await supabase.storage
+            .from('foundimages')
+            .upload(filePath, file);
 
           if (uploadError) {
             console.error("❌ File upload error:", uploadError.message);
@@ -160,26 +153,26 @@ export default {
           }
 
           // ✅ Retrieve public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('missingimages')
-            .getPublicUrl(filePath);
+          const { data: { signedUrl } } = await supabase.storage
+            .from('foundimages')
+            .createSignedUrl(filePath, 3600);
 
-          if (!publicUrl) {
+          if (!signedUrl) {
             console.error("❌ Error retrieving image URL.");
             this.$refs.toast.showToast('Failed to process image. Please try again.', 'error');
             return;
           }
 
-          imageUrl = publicUrl;
+          imageUrl = signedUrl;
           console.log("🌐 Image URL retrieved:", imageUrl);
         }
 
         // ✅ Step 1: Insert into `reports` (Supertype Table)
         const reportDataToInsert = {
-          report_type: formData.report_type, // Always "missing"
+          report_type: formData.report_type,
           reporter_name: formData.reporter_name,
           reporter_contact: formData.reporter_contact,
-          report_status: formData.reporter_status,
+          report_status: 'open',
           user_id: formData.user_id,
           created_at: formData.created_at,
         };
@@ -194,26 +187,26 @@ export default {
           return;
         }
 
-        // ✅ Step 2: Insert into `missing_reports` (Subtype Table)
-        const missingReportData = {
-          missing_report_id: insertedReport[0].id, // Use the auto-generated ID from reports table
-          missing_person_name: formData.missing_person_name,
-          age: formData.age,
+        // ✅ Step 2: Insert into `found_reports` (Subtype Table)
+        const foundReportData = {
+          found_report_id: insertedReport[0].id, // Use the auto-generated ID from reports table
+          found_person_name: formData.found_person_name,
+          age_estimate: formData.age_estimate,
           gender: formData.gender,
-          last_seen_location: formData.last_seen_location,
-          last_seen_date: formData.last_seen_date,
+          found_location: formData.found_location,
+          found_date: formData.found_date,
           description: formData.description,
           photo_url: imageUrl || null,
         };
 
-        console.log("📊 Inserting into 'missing_reports' table:", missingReportData);
+        console.log("📊 Inserting into 'found_reports' table:", foundReportData);
 
-        const { error: missingReportInsertError } = await supabase
-          .from("missing_reports")
-          .insert([missingReportData]);
+        const { error: foundReportInsertError } = await supabase
+          .from("found_reports")
+          .insert([foundReportData]);
 
-        if (missingReportInsertError) {
-          console.error("❌ Error inserting into 'missing_reports':", missingReportInsertError.message);
+        if (foundReportInsertError) {
+          console.error("❌ Error inserting into 'found_reports':", foundReportInsertError.message);
           this.$refs.toast.showToast('Failed to submit report details. Please try again.', 'error');
           return;
         }
@@ -232,36 +225,125 @@ export default {
 </script>
 
 <style scoped>
-.blurred {
-  filter: blur(2px);
-  pointer-events: none;
-  user-select: none;
-}
+      .blurred {
+      filter: blur(2px);
+      pointer-events: none;
+      user-select: none;
+      }
 
-.form-container {
-  background: transparent;
-  border-radius: 12px;
-}
+      .form-container {
+      background: transparent;
+      border-radius: 12px;
+      }
 
-.cta-container {
-  text-align: left;
-  padding: 5vw;
-  margin: auto;
-  background-color: #49596b;
-  color: #f2f0e9;
-}
+      .form-container::-webkit-scrollbar {
+      display: none;
+      }
 
-.q-btn {
-  font-size: 1.5vw;
-  padding: 1vw 2vw;
-}
+      .cta-container {
+      text-align: left;
+      padding: 5vw; /* Responsive padding */
+      margin: auto;
+      background-color: #49596b;
+      }
 
-@media (max-width: 768px) {
-  .cta-container {
-    padding: 6vw;
-  }
-  .q-btn {
-    font-size: 3vw;
-  }
-}
+      /* Headings */
+      .cta-container h2,
+      .cta-container h3 {
+      color: #f2f0e9;
+      font-size: 2.7vw; /* Responsive font size */
+      font-weight: bold;
+      margin-bottom: 1vw;
+      }
+
+      /* List Items */
+      .cta-container ul {
+      padding: 0;
+      }
+
+      .cta-container ul li {
+      color: #f2f0e9;
+      font-size: 1.3vw; /* Responsive font size */
+      margin-bottom: 1vw;
+      }
+
+      /* Paragraph */
+      .cta-container p {
+      color: #f2f0e9;
+      font-size: 1.2vw; /* Responsive font size */
+      margin-bottom: 2vw;
+      }
+
+      /* Button */
+      .q-btn {
+      font-size: 1.5vw; /* Responsive font size */
+      padding: 1vw 2vw;
+      }
+
+      /* Media Queries */
+      @media (max-width: 1024px) {
+      .cta-container h2,
+      .cta-container h3 {
+          font-size: 3.5vw;
+      }
+
+      .cta-container ul li {
+          font-size: 2vw;
+      }
+
+      .cta-container p {
+          font-size: 1.8vw;
+      }
+
+      .q-btn {
+          font-size: 2.5vw;
+      }
+      }
+
+      @media (max-width: 768px) {
+      .cta-container {
+          padding: 6vw;
+      }
+
+      .cta-container h2,
+      .cta-container h3 {
+          font-size: 4vw;
+      }
+
+      .cta-container ul li {
+          font-size: 2.2vw;
+      }
+
+      .cta-container p {
+          font-size: 2vw;
+      }
+
+      .q-btn {
+          font-size: 3vw;
+      }
+      }
+
+      @media (max-width: 480px) {
+      .cta-container {
+          padding: 8vw;
+      }
+
+      .cta-container h2,
+      .cta-container h3 {
+          font-size: 5vw;
+      }
+
+      .cta-container ul li {
+          font-size: 2.5vw;
+      }
+
+      .cta-container p {
+          font-size: 2.5vw;
+      }
+
+      .q-btn {
+          font-size: 3.5vw;
+      }
+      }
 </style>
+

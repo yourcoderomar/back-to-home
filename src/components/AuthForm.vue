@@ -110,7 +110,15 @@
           </template>
         </div>
   
-        <q-btn label="Sign Up" type="submit" class="submit" />
+        <q-btn :label="buttonText" type="submit" class="submit" />
+        
+        <!-- Add the redirect link -->
+        <p class="redirect-text">
+          {{ redirectMessage }}
+          <router-link :to="redirectPath" class="redirect-link">
+            {{ redirectLinkText }}
+          </router-link>
+        </p>
       </q-form>
     </q-page-container>
   </template>
@@ -122,7 +130,11 @@
       title: { type: String, default: "Register" },
       message: { type: String, default: "Signup now and get full access to our app." },
       formFields: { type: Array, default: () => [] },
-      initialValues: { type: Object, default: () => ({}) }
+      initialValues: { type: Object, default: () => ({}) },
+      buttonText: { type: String, required: true },
+      redirectMessage: { type: String, required: true },
+      redirectPath: { type: String, required: true },
+      redirectLinkText: { type: String, required: true }
     },
     data() {
       return {
@@ -263,6 +275,22 @@
     background-color: #00bfff;
   }
 
+  .redirect-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #f2f0e9;
+  }
+
+  .redirect-link {
+    color: #00bfff;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .redirect-link:hover {
+    text-decoration: underline;
+  }
   
   </style>
   

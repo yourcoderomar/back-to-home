@@ -4,50 +4,93 @@
       <NavBar class="navbar" />
 
       <div class="content">
-        <div v-if="report" class="grid-container">
-          <!-- Name Section -->
-          <div class="Name">
-            <q-btn @click="goBack" label="Back" class="back-button submit" />
-            <h1 class="report-title">{{ report.missing_person_name || report.found_person_name }}</h1>
+        <div v-if="report" class="modern-container">
+          <!-- Left Section with Image -->
+          <div class="left-section">
+            <q-img v-if="imageUrl" :src="imageUrl" class="product-image" />
           </div>
 
-          <!-- Image Section -->
-          <div class="img">
-            <q-img v-if="imageUrl" :src="imageUrl" class="report-image" />
-          </div>
-
-          <!-- Details Section -->
-          <div class="details">
-            <p class="report-id"><strong>Report ID:</strong> {{ report.id }}</p>
-            <p class="report-created"><strong>Created:</strong> {{ formatDate(report.created_at) }}</p>
-            <p class="report-status"><strong>Status:</strong> {{ report.report_status }}</p>
-            <p class="report-reporter-name"><strong>Reporter Name:</strong> {{ report.reporter_name }}</p>
-            <p class="report-reporter-contact"><strong>Reporter Contact:</strong> {{ report.reporter_contact }}</p>
-            <p class="report-updated"><strong>Updated At:</strong> {{ formatDate(report.updated_at) }}</p>
-
-            <div v-if="report.report_type === 'missing'">
-              <p><strong>Age:</strong> {{ report.age }}</p>
-              <p><strong>Gender:</strong> {{ report.gender }}</p>
-              <p><strong>Last Seen Location:</strong> {{ report.last_seen_location }}</p>
-              <p><strong>Last Seen Date:</strong> {{ formatDate(report.last_seen_date) }}</p>
-              <p><strong>Description:</strong> {{ report.description }}</p>
+          <!-- Right Section with Details -->
+          <div class="right-section">
+            <q-btn flat icon="arrow_back" @click="goBack" class="back-button" color="dark" />
+            
+            <h1 class="title">{{ report.missing_person_name || report.found_person_name }}</h1>
+            <p class="report-id">Report #{{ report.id }}</p>
+            
+            <div class="status-chip" :class="report.report_status.toLowerCase()">
+              {{ report.report_status }}
             </div>
 
-            <div v-if="report.report_type === 'found'">
-              <p><strong>Age Estimate:</strong> {{ report.age_estimate }}</p>
-              <p><strong>Gender:</strong> {{ report.gender }}</p>
-              <p><strong>Found Location:</strong> {{ report.found_location }}</p>
-              <p><strong>Found Date:</strong> {{ formatDate(report.found_date) }}</p>
-              <p><strong>Description:</strong> {{ report.description }}</p>
+            <div class="details-section">
+              <template v-if="report.missing_person_name">
+                <h3>Missing Person Details</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="label">Age:</span>
+                    <span>{{ report.age }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Gender:</span>
+                    <span>{{ report.gender }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Last Seen:</span>
+                    <span>{{ formatDate(report.last_seen_date) }}</span>
+                  </div>
+                  <div class="detail-item full-width">
+                    <span class="label">Location:</span>
+                    <span>{{ report.last_seen_location }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <template v-if="report.found_person_name">
+                <h3>Found Person Details</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="label">Age Estimate:</span>
+                    <span>{{ report.age_estimate }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Gender:</span>
+                    <span>{{ report.gender }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Found Date:</span>
+                    <span>{{ formatDate(report.found_date) }}</span>
+                  </div>
+                  <div class="detail-item full-width">
+                    <span class="label">Location:</span>
+                    <span>{{ report.found_location }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <div class="description">
+                <h3>Description</h3>
+                <p>{{ report.description }}</p>
+              </div>
+
+              <div class="reporter-info">
+                <h3>Reporter Information</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="label">Name:</span>
+                    <span>{{ report.reporter_name }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Contact:</span>
+                    <span>{{ report.reporter_contact }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div v-else>
-          <div class="loading-container">
-            <q-spinner color="primary" size="50px" />
-            <p>Loading report details...</p>
-          </div>
+        <div v-else class="loading-container">
+          <q-spinner color="primary" size="50px" />
+          <p>Loading report details...</p>
         </div>
       </div>
     </div>
@@ -80,36 +123,44 @@ export default {
         // Fetch the report type and necessary fields from the reports table
         const { data: reportData, error: reportError } = await supabase
           .from('reports')
-          .select('id, report_type, created_at, report_status, reporter_name, reporter_contact, updated_at') // Fetch all necessary fields
+          .select('id, report_type, created_at, report_status, reporter_name, reporter_contact, updated_at')
           .eq('id', id)
           .single();
 
         if (reportError) throw reportError;
 
-        console.log('Report Data:', reportData); // Debugging line
-
-        // Determine which table to query based on the report type
-        const tableName = reportData.report_type === 'missing' ? 'missing_reports' : 'found_reports';
-        const nameField = reportData.report_type === 'missing' ? 'missing_person_name' : 'found_person_name';
-        const foreignKey = reportData.report_type === 'missing' ? 'missing_report_id' : 'found_report_id';
-
-        // Fetch the report details from the appropriate table
-        const { data, error } = await supabase
-          .from(tableName)
-          .select(`${nameField}, age, gender, last_seen_location, last_seen_date, description${reportData.report_type === 'found' ? ', age_estimate, found_location, found_date' : ''}`) // Conditionally fetch fields without trailing comma
-          .eq(foreignKey, id)
+        // Fetch both missing and found report details
+        const { data: missingData, error: missingError } = await supabase
+          .from('missing_reports')
+          .select('missing_person_name, age, gender, last_seen_location, last_seen_date, description')
+          .eq('missing_report_id', id)
           .single();
 
-        if (error) throw error;
+        if (missingError && missingError.code !== 'PGRST116') {
+          console.error('Error fetching missing report:', missingError);
+        }
 
-        console.log('Fetched Data:', data); // Debugging line
+        const { data: foundData, error: foundError } = await supabase
+          .from('found_reports')
+          .select('found_person_name, age_estimate, gender, found_location, found_date, description')
+          .eq('found_report_id', id)
+          .single();
 
-        // Merge the report data with the details from the subtype table
-        report.value = { ...reportData, ...data }; // This will include all necessary fields
+        if (foundError && foundError.code !== 'PGRST116') {
+          console.error('Error fetching found report:', foundError);
+        }
+
+        // Combine all the data
+        report.value = {
+          ...reportData,
+          ...(missingData || {}),
+          ...(foundData || {})
+        };
+
       } catch (error) {
         console.error('Error fetching report details:', error);
       } finally {
-        loading.value = false; // Set loading to false after fetching
+        loading.value = false;
       }
     };
 
@@ -137,68 +188,125 @@ export default {
 </script>
 
 <style scoped>
-.report-title {
-  color: #f2f0e9;
-  font-size: 5vw;
-  font-weight: 600;
-}
 .report-details {
-  padding: 20px;
-}
-.back-button {
-  top: -65px; 
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-.grid-container {
+.modern-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: 10px;
-  grid-template-areas:
-    "Name img"
-    "details details";
-  padding: 20px;
+  gap: 60px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.Name {
-  grid-area: Name;
-  background-color: #49596b;
-  border-radius: 8px;
-  max-height: 200px;
+.left-section {
+  padding: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f8f8f8;
 }
 
-.img {
-  grid-area: img;
-  display: flex;
-  justify-content: center;
-}
-
-.report-image {
-  max-width: 100%;
-  height: auto;
+.product-image {
+  width: 100%;
+  max-height: 600px;
+  object-fit: cover;
   border-radius: 8px;
 }
 
-.details {
-  grid-area: details;
-  padding: 10px;
-  background-color: #49596b;
-  border-radius: 8px;
-}
-
-.navbar {
-  margin-bottom: 20px;
-}
-
-.footer {
-  margin-top: 20px;
+.right-section {
+  padding: 40px;
+  position: relative;
 }
 
 .back-button {
-  margin-bottom: 10px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.title {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.report-id {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 30px;
+}
+
+.status-chip.open {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-chip.closed {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.details-section {
+  margin-top: 30px;
+}
+
+.details-section h3 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.description {
+  margin-bottom: 30px;
+}
+
+.description p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.reporter-info {
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 }
 
 .loading-container {
@@ -206,7 +314,25 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .modern-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .left-section {
+    padding: 20px;
+  }
+
+  .right-section {
+    padding: 20px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -13,6 +13,10 @@
           :title="'Sign Up'"
           :message="'Create an account to get started!'"
           :formFields="formFields"
+          :buttonText="'Sign Up'"
+          :redirectMessage="'Already have an account?'"
+          :redirectPath="'/signin'"
+          :redirectLinkText="'Sign In'"
           @formSubmitted="handleSignup"
         />
       </div>
