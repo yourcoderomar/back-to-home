@@ -1,0 +1,396 @@
+$link-color: #49596b;
+$white: #f2f0e9;
+$black: black;
+$gray: rgb(90, 90, 90);
+
+.link {
+  background-color: transparent;
+}
+
+header {
+  background-color: #f2f0e9;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  .nav-span{
+    color: $white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 10px 24px;
+    display: block;
+    transition: background-color 0.3s ease;
+    background-color: $link-color;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin: 0;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+  }
+
+  .hide-on-desktop {
+    display: none;
+  }
+
+  .header-right {
+    position: absolute;
+    top: 30px;
+    right: -10px;
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between search box and user logo */
+  }
+
+  a {
+    color: $white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 10px 24px;
+    display: block;
+    transition: background-color 0.3s ease;
+    background-color: $link-color;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin: 0;
+
+
+  }
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+  margin-right: 10px;
+  padding: 5px;
+}
+
+nav {
+  max-width: 1200px;
+  width: 100%;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+
+    li {
+      position: relative;
+      margin: 0 15px;
+    }
+  }
+}
+
+.right_nav {
+  background-color: $white !important;
+  color: $link-color !important;
+
+  &:hover {
+    background-color: $link-color !important;
+    color: $white !important;
+  }
+}
+
+.donate-btn {
+  margin-left: 5px;
+  background-color: $white;
+  color: $link-color;
+  border: 2px solid $link-color !important;
+  border-bottom: none !important;
+  box-sizing: border-box !important;
+
+  &:hover {
+    background-color: $link-color !important;
+    color: $white !important;
+  }
+}
+
+/* Dropdown Styling */
+.dropdown {
+  position: relative;
+  cursor: pointer;
+
+  &:hover .dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-menu {
+    display: none; // Ensure dropdown is hidden by default
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #49596B;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    list-style: none;
+    padding: 10px 0;
+    min-width: 200px;
+    z-index: 1000;
+
+    li {
+      margin: 0;
+      border-radius: 0 !important;
+    }
+
+    a span{
+      color: $white;
+      padding: 10px 20px;
+      display: block;
+      transition: background-color 0.3s ease;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 0 !important;
+
+      &:hover {
+        background-color: $white;
+        color: $link-color;
+      }
+    }
+  }
+
+  .arrow-icon {
+    transition: transform 0.3s ease;
+
+    &.rotated {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+
+/* Search Bar */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-box {
+    font-size: 14px;
+    background-color: #dddddd91;
+    border: none; /* Adds a border for the input box */
+    width: 200px; /* Set width for consistency */
+    box-sizing: border-box; /* Ensures padding does not affect the width */
+    font-size: 18px;
+    font-weight: 800;
+
+    &:hover {
+      background-color: #dddddd91 !important; /* Ensure background color does not change on hover */
+    }
+
+    &::placeholder {
+      color: rgb(90, 90, 90);
+    }
+
+    &:focus {
+      background-color: #dddddd91 !important;
+      box-shadow: none !important; /* Remove Quasar box-shadow */
+    }
+
+    ::v-deep .q-field__control {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    ::v-deep .q-field__control-container {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    ::v-deep .q-placeholder {
+      color: rgb(90, 90, 90) !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+    }
+
+    ::v-deep .q-placeholder--hover {
+      background-color: #dddddd91 !important;
+    }
+
+    ::v-deep .q-placeholder--focused {
+      color: rgb(90, 90, 90) !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+    }
+
+    ::v-deep .q-field__native {
+      &:hover {
+        background-color: transparent !important; /* Ensure background color does not change on hover */
+      }
+    }
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 10px; /* Adjust the position of the icon inside the box */
+    font-size: 22px;
+    color: rgb(90, 90, 90); /* Icon color */
+    pointer-events: none; /* Prevents the icon from interfering with input focus */
+  }
+}
+
+/* User Logo */
+.user-logo {
+  font-size: 36px;
+  color: $black;
+}
+
+/* User Dropdown */
+.user-dropdown {
+  position: relative;
+  display: inline-block;
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+
+    button {
+      color: $black;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+
+      &:hover {
+        background-color: #f1f1f1;
+      }
+    }
+  }
+
+  &:hover .dropdown-content {
+    display: block;
+  }
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none;
+  }
+  .hide-on-desktop {
+    display: block !important;
+  }
+
+  .menu-btn {
+    display: block;
+    order: 2;
+    margin-left: auto;
+    font-size: 24px;
+    cursor: pointer;
+
+
+  .user-logo {
+    top: 10px;
+  }
+  .search-box {
+    width: 100%;
+  }
+
+  .logo {
+    width: 100px;
+    order: 1;
+    margin-right: auto;
+  }
+
+    div {
+      width: 25px;
+      height: 3px;
+      background-color: #333;
+      margin: 5px 0;
+      transition: 0.4s;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    order: 3;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 35px;
+    top: 47px;
+  }
+
+  nav ul {
+    display: none;
+    flex-direction: column;
+    width: 287px;
+    background-color: $white;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 0 8px;
+    bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    &.show {
+      display: flex;
+    }
+
+    li {
+      margin: 0;
+      text-align: right;
+      padding: 8px 20px;
+    }
+  }
+
+  .close-btn {
+    display: block;
+    text-align: right;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: $white;
+    margin-left: 231px;
+
+    i {
+      font-size: 24px;
+      color: #333;
+    }
+  }
+}
+
+/* Phone Hover */
+.phone-hover {
+  position: relative;
+  border-bottom-left-radius: 8px;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+
+
+  &:hover {
+    color: transparent;
+
+    &::before {
+      content: '\f095'; /* Unicode for phone icon */
+      font-family: 'Font Awesome 5 Free'; /* Ensure you have Font Awesome included */
+      font-weight: 900; /* Font Awesome solid style */
+      position: absolute;
+      left: 0;
+      color: $link-color;
+      font-size: 22px;
+    }
+
+
+    &::after {
+      content: '19999';
+      position: absolute;
+      left: 50px;
+      color: $white;
+      font-size: 22px;
+    }
+  }
+}

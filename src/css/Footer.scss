@@ -1,0 +1,119 @@
+.footer {
+    background-color: #2C3539;
+    color: #f2f0e9;
+    height: auto; /* Allow dynamic height for responsiveness */
+    padding: 20px 10px;
+    position: relative; /* For better control of child elements */
+  }
+  
+  .footer-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Allow wrapping for smaller screens */
+  }
+  
+  .footer-box {
+    min-width: 200px; /* Prevent shrinking */
+    margin: 0 20px; /* Add space between boxes */
+  }
+  
+  .footer-box h5 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .footer-box a {
+    text-decoration: none;
+    color: white;
+    font-size: 18px;
+    font-weight: 300;
+    display: block; /* Ensure links stack */
+    margin-bottom: 5px;
+  }
+  
+  .footer-icon-box {
+    position: absolute; /* Use absolute positioning to align it */
+    top: 65px; /* Align vertically within the footer */
+    right: 20px; /* Push it to the right side */
+    display: flex;
+    flex-direction: column; /* Stack icons vertically */
+    gap: 25px; /* Reasonable spacing between icons */
+  }
+  
+  .footer-icon a {
+    text-decoration: none;
+    color: black;
+    font-size: 18px; /* Reduced icon size */
+    padding: 8px; /* Reduced padding for smaller icons */
+    background-color: grey;
+    border-radius: 50%;
+    transition: 0.4s;
+  }
+  
+  .footer-icon a:hover {
+    background-color: white;
+  }
+  
+  hr {
+    margin: 20px auto;
+    width: 80%;
+    border-color: #fff;
+  }
+  
+  .copyrights {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 10px;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .footer-container {
+      flex-direction: column; /* Stack items vertically */
+      align-items: center;
+    }
+  
+    .footer-box {
+      text-align: center; /* Center align content */
+      margin: 20px 0;
+    }
+  
+    .footer-icon-box {
+      position: static; /* Remove absolute positioning for smaller screens */
+      align-items: center; /* Center icons */
+      margin: 0px;
+      gap: 20px; /* Adjust spacing for smaller screens */
+      flex-direction: row; /* Change to row for smaller screens */
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .footer-box h5 {
+      font-size: 14px;
+    }
+  
+    .footer-box a {
+      font-size: 12px;
+    }
+  
+    .footer-icon a {
+      font-size: 16px; /* Smaller size for mobile */
+      padding: 6px; /* Smaller padding for mobile */
+    }
+  
+    .footer-icon-box {
+      gap: 15px; /* Reduced spacing for compact screens */
+    }
+  }
+  
+  .container-body {
+    position: relative;
+    text-align: center;
+    margin: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    justify-content: flex-start; /* Align elements to the top */
+    align-items: center; /* Center elements horizontally */
+  }

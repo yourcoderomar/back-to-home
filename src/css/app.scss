@@ -1,0 +1,94 @@
+// app global css in SCSS form
+body {
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    background-color: #f2f0e9;
+
+  }
+
+  .q-page{
+    min-height: 0px!important;
+    background-color: #f2f0e9;
+  }
+
+  
+
+
+  .q-my-md{
+    background-color: #f2f0e9;
+
+  }
+
+  .q-mb-md{
+    min-height: 60vh;
+  }
+
+  .q-field__control {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  .q-field__control-container {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  .q-placeholder {
+    color: rgb(90, 90, 90) !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+  }
+  
+  .q-placeholder--hover {
+    background-color: #dddddd91 !important;
+  }
+  
+  .q-placeholder--focused {
+    color: rgb(90, 90, 90) !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+  }
+  
+  .q-field__native:hover {
+    background-color: transparent !important; /* Ensure background color does not change on hover */
+  }
+
+  .btn{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 350px;
+        padding: 0.625rem 1.5rem; /* py-2.5 px-6 */
+        background-color: #49596b;
+        color: #fff; /* text-white */
+        border: 2px solid #49596b; /* border-black */
+        border-radius: 9999px; /* rounded-full */
+        text-transform: uppercase;
+        font-size: 16px; /* text-sm */
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+      
+      
+      &:hover {
+        background-color: #f2f0e9;
+        color: #49596b;
+        border-color: #49596b;
+      }
+  }
+
+  .q-icon{
+    size: 24px;
+  }
+
+
+  .submit {
+    border: none;
+    outline: none;
+    padding: 10px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    background-color: #00bfff;
+  }
+

@@ -1,0 +1,155 @@
+$link-color: #49596b;
+$white: #f2f0e9;
+$black: black;
+$gray: rgb(90, 90, 90);
+
+.vertical-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background-color: $link-color;
+  color: $white;
+  box-shadow: -5px 0 5px -5px $black;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  transition: 0.8s;
+
+  &.is-visible {
+    right: 0;
+  }
+
+  .close-btn {
+    align-self: flex-end;
+    margin-right: 20px;
+    background: none;
+    border: none;
+    color: $white;
+    font-size: 24px;
+    cursor: pointer;
+    position: absolute;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: center;
+
+    li {
+      margin: 20px 0;
+
+      a {
+        color: $white;
+        text-decoration: none;
+        font-size: 24px;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #ddd;
+        }
+      }
+    }
+  }
+
+  /* Old btns */
+
+  .donate-btn {
+    margin-left: 5px;
+    background-color: $white;
+    color: $link-color;
+    border: 2px solid $link-color !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+    margin-top: auto;
+  
+    &:hover {
+      background-color: $link-color !important;
+      color: $white !important;
+    }
+
+    a{
+      color: $link-color;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 10px 24px;
+      display: block;
+      transition: background-color 0.3s ease;
+      background-color: $white;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      margin: 0;
+
+      &:hover {
+        color: $white;
+        background-color: $link-color;
+      }
+    }
+  }
+
+
+  .btn-1 {
+    color: $white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 20px;
+    padding: 10px 24px;
+    display: block;
+    transition: background-color 0.3s ease;
+    background-color: $link-color;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin: 0;
+
+    &:hover {
+      color: $link-color;
+      background-color: $white;
+    }
+  }
+
+  /* Search Bar */
+  .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center align the input */
+
+    .search-box {
+      font-size: 14px;
+      background-color: #dddddd91;
+      border: none; /* Adds a border for the input box */
+      width: 80%; /* Set width for consistency */
+      box-sizing: border-box; /* Ensures padding does not affect the width */
+      font-size: 18px;
+      font-weight: 800;
+      padding-left: 0px; /* Add padding to make room for the icon */
+
+      &:hover {
+        background-color: #dddddd91 !important; /* Ensure background color does not change on hover */
+      }
+
+      &::placeholder {
+        color: rgb(90, 90, 90);
+      }
+
+      &:focus {
+        background-color: #dddddd91 !important;
+        box-shadow: none !important; /* Remove Quasar box-shadow */
+      }
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 10px; /* Position the icon to the right */
+      font-size: 22px;
+      color: rgb(90, 90, 90); /* Icon color */
+      pointer-events: none; /* Prevents the icon from interfering with input focus */
+    }
+  }
+}
