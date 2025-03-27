@@ -10,7 +10,7 @@ const teamText = "Our team consists of dedicated individuals who bring diverse s
 const teamMembers = ref([
   {
     name: 'Team Member 1',
-    image: '/images/search.jpg'
+    image: '/images/omar.jpg'
   },
   {
     name: 'Team Member 2',

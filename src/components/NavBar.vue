@@ -17,7 +17,7 @@
         <router-link to="/ReportMissing" class="nav-link">Report</router-link>
         <router-link to="/SearchMissing" class="nav-link">Search</router-link>
         <router-link to="/SearchReports" class="nav-link">Reports</router-link>
-        <router-link to="/donation" class="donate-btn">
+        <router-link to="/donate" class="donate-btn">
           <q-icon name="monetization_on" /> Donate
         </router-link>
       </div>

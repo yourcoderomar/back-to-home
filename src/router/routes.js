@@ -65,6 +65,11 @@ const routes = [
     component: () => import('pages/SearchReports.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/donate',
+    name: 'Donate',
+    component: () => import('pages/DonationPage.vue')
+  },
   
   // Always leave this as last one,
   // but you can also remove it
