@@ -110,7 +110,18 @@ export default {
   },
   methods: {
     handleLearnMore(plan) {
-      console.log("Learn more about:", plan);
+      if (plan.price > 0) {
+        this.$router.push({
+          name: 'Checkout',
+          query: {
+            amount: plan.price,
+            type: 'premium'
+          }
+        });
+      } else {
+        // For free plan, you might want to handle differently
+        console.log("Free plan selected");
+      }
     },
   },
 };

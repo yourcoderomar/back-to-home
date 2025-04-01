@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import FooterComponent from 'src/components/Footer.vue';
 import NavBar from 'src/components/NavBar.vue';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const aboutText = "Back2Home is a dedicated platform created by graduating students to address the critical issue of missing persons. What started as an academic project has evolved into a powerful tool that combines advanced technology with compassionate service to help reunite families.";
 
@@ -14,13 +16,21 @@ const teamMembers = ref([
   },
   {
     name: 'Team Member 2',
-    image: '/images/search.jpg'
+    image: '/images/omar.jpg'
   },
   {
     name: 'Team Member 3',
-    image: '/images/search.jpg'
+    image: '/images/omar.jpg'
   }
 ]);
+
+onMounted(() => {
+  AOS.init({
+    duration: 800,
+    once: true,
+    offset: 100
+  });
+});
 </script>
 
 <template>
@@ -29,28 +39,28 @@ const teamMembers = ref([
 
     <!-- About Section -->
     <div class="about-section" id="about">
-      <h1 class="page-title">ABOUT US.</h1>
+      <h1 class="page-title" data-aos="fade-down">ABOUT US.</h1>
       
       <div class="content-block">
-        <p class="large-text">
+        <p class="large-text" data-aos="fade-up" data-aos-delay="100">
           {{ aboutText }}
         </p>
       </div>
 
       <!-- Full Width Image -->
-      <div class="full-width-image">
+      <div class="full-width-image" data-aos="zoom-in">
         <img src="/images/search.jpg" alt="Team working together" />
       </div>
 
       <!-- Quote Section -->
       <div class="quote-section">
-        <div class="quote-container">
+        <div class="quote-container" data-aos="fade-right">
           <blockquote>
             "Our work does make sense only if it is a faithful witness of his time."
           </blockquote>
           <cite>Jean-Philippe Nuel, Director</cite>
         </div>
-        <div class="quote-image">
+        <div class="quote-image" data-aos="fade-left">
           <img src="/images/search.jpg" alt="Working on wall" />
         </div>
       </div>
@@ -58,38 +68,34 @@ const teamMembers = ref([
 
     <!-- Team Section -->
     <div class="team-section" id="team">
-      <h2 class="section-title">THE TEAM.</h2>
+      <h2 class="section-title" data-aos="fade-down">THE TEAM.</h2>
       
       <div class="team-description">
-        <p class="large-text">
+        <p class="large-text" data-aos="fade-up" data-aos-delay="100">
           {{ teamText }}
         </p>
       </div>
 
       <!-- Team Grid -->
       <div class="team-grid">
-        <div v-for="(member, index) in teamMembers" :key="index" class="team-member">
+        <div v-for="(member, index) in teamMembers" 
+             :key="index" 
+             class="team-member"
+             :data-aos="'fade-up'"
+             :data-aos-delay="index * 100">
           <img :src="member.image" :alt="member.name" />
         </div>
       </div>
 
       <!-- Statistics -->
       <div class="statistics">
-        <div class="stat-item">
-          <h3>600</h3>
-          <p>Missing reports handled</p>
-        </div>
-        <div class="stat-item">
-          <h3>700</h3>
-          <p>Cases resolved</p>
-        </div>
-        <div class="stat-item">
-          <h3>1.2</h3>
-          <p>Million database entries</p>
-        </div>
-        <div class="stat-item">
-          <h3>110</h3>
-          <p>Active volunteers</p>
+        <div v-for="(stat, index) in ['Missing reports handled', 'Cases resolved', 'Million database entries', 'Active volunteers']" 
+             :key="index" 
+             class="stat-item"
+             :data-aos="'fade-up'"
+             :data-aos-delay="index * 100">
+          <h3>{{ [600, 700, 1.2, 110][index] }}</h3>
+          <p>{{ stat }}</p>
         </div>
       </div>
     </div>
@@ -182,6 +188,7 @@ cite {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 12px;
 }
 
 .section-title {
@@ -212,6 +219,7 @@ cite {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 12px;
 }
 
 .statistics {
@@ -265,5 +273,19 @@ cite {
     grid-template-columns: 1fr 1fr;
     padding: 40px 20px;
   }
+}
+
+/* Add smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure animations work properly */
+[data-aos] {
+  pointer-events: none;
+}
+
+[data-aos].aos-animate {
+  pointer-events: auto;
 }
 </style>

@@ -86,6 +86,7 @@ import { ref } from 'vue';
 import NavBar from 'src/components/NavBar.vue';
 import FooterComponent from 'src/components/Footer.vue';
 import HeroSection from 'src/components/HeroSection.vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'DonationPage',
@@ -98,6 +99,7 @@ export default {
     const selectedAmount = ref(10);
     const customAmount = ref('');
     const frequency = ref('monthly');
+    const router = useRouter();
 
     const donationAmounts = [
       { 
@@ -115,10 +117,12 @@ export default {
     ];
 
     const proceedToCheckout = () => {
-      // TODO: Implement checkout logic
-      console.log('Proceeding to checkout with:', {
-        amount: selectedAmount.value,
-        frequency: frequency.value
+      router.push({
+        name: 'Checkout',
+        query: {
+          amount: selectedAmount.value,
+          type: 'donation'
+        }
       });
     };
 

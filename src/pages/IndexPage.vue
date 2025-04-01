@@ -11,22 +11,54 @@
     <!-- Content Overlay (NavBar + BigText) -->
     <div class="overlay-content">
       <NavBar class="navbar" />
-      <BigText />
+      <BigText data-aos="fade-down" data-aos-duration="1000" />
     </div>
 
     <!-- Other Sections (No Video Background) -->
     <q-page-container>
-      <TopSection />
+      <TopSection data-aos="fade-up" data-aos-duration="1000" />
       <section class="q-mb-md">
-        <HeroSection title="How Many Go Missing Every Day?" subtitle="" />
-        <LostPeopleSection />
+        <HeroSection 
+          title="How Many Go Missing Every Day?" 
+          subtitle="" 
+          data-aos="fade-right"
+          data-aos-duration="800"
+        />
+        <LostPeopleSection 
+          data-aos="fade-up"
+          data-aos-delay="200"
+          data-aos-duration="800"
+        />
       </section>
-      <HeroSection title="Real-Time Report" subtitle="" />
-      <StatsOverview :lost="120" :connectedPercentage="45.8" :found="80"/>
+      <HeroSection 
+        title="Real-Time Report" 
+        subtitle="" 
+        data-aos="fade-left"
+        data-aos-duration="800"
+      />
+      <StatsOverview 
+        :lost="120" 
+        :connectedPercentage="45.8" 
+        :found="80"
+        data-aos="zoom-in"
+        data-aos-duration="1000"
+      />
       <router-view />
-      <HeroSection title="Have You Seen Someone?" subtitle="" />
-      <HaveYouSeen />
-      <DownloadApp />
+      <HeroSection 
+        title="Have You Seen Someone?" 
+        subtitle="" 
+        data-aos="fade-right"
+        data-aos-duration="800"
+      />
+      <HaveYouSeen 
+        data-aos="fade-up"
+        data-aos-delay="200"
+        data-aos-duration="800"
+      />
+      <DownloadApp 
+        data-aos="fade-up"
+        data-aos-duration="1000"
+      />
     </q-page-container>
 
     <FooterComponent />
@@ -34,6 +66,7 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import TopSection from '../components/TopSection.vue';
 import HaveYouSeen from '../components/HaveYouSeen.vue';
@@ -43,6 +76,18 @@ import HeroSection from 'src/components/HeroSection.vue';
 import BigText from 'src/components/BigText.vue';
 import StatsOverview from 'src/components/StatsOverview.vue';
 import DownloadApp from 'src/components/DownloadApp.vue';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
+onMounted(() => {
+  AOS.init({
+    duration: 800,
+    once: true,
+    offset: 100,
+    easing: 'ease-in-out',
+    anchorPlacement: 'top-bottom'
+  });
+});
 </script>
 
 <style scoped>
@@ -87,5 +132,24 @@ import DownloadApp from 'src/components/DownloadApp.vue';
   position: relative;
   z-index: 5;
   background: #f2f0e9; /* Ensure content is readable */
+}
+
+/* Add smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure animations work properly */
+[data-aos] {
+  pointer-events: none;
+}
+
+[data-aos].aos-animate {
+  pointer-events: auto;
+}
+
+/* Add some spacing between sections for better animation visibility */
+section {
+  margin-bottom: 2rem;
 }
 </style>

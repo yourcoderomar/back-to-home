@@ -10,7 +10,30 @@
       <div class="show-on-desktop">
         <div class="search-container">
           <q-icon name="search" class="search-icon" />
-          <q-input v-model="searchQuery" class="search-box" placeholder="Search..." dense standout />
+          <q-input 
+            v-model="searchQuery" 
+            class="search-box" 
+            placeholder="Search..." 
+            dense 
+            standout
+            @update:model-value="handleSearch"
+          />
+          <!-- Search Results Dropdown -->
+          <div v-show="searchQuery" class="search-dropdown">
+            <ul v-if="filteredPages.length > 0">
+              <li 
+                v-for="page in filteredPages" 
+                :key="page.path"
+                @click="navigateToPage(page.path)"
+              >
+                <q-icon :name="page.icon" class="page-icon" />
+                {{ page.name }}
+              </li>
+            </ul>
+            <div v-else class="no-results">
+              No results found
+            </div>
+          </div>
         </div>
         <router-link to="/AboutUs" class="nav-link">About us</router-link>
         <router-link to="/OurPlans" class="nav-link">Plans</router-link>
@@ -96,6 +119,39 @@ export default {
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     const userAvatar = ref(defaultAvatar);
 
+    // Define available pages for search
+    const availablePages = [
+      { name: 'About Us', path: '/AboutUs', icon: 'info' },
+      { name: 'Plans', path: '/OurPlans', icon: 'card_membership' },
+      { name: 'Report Missing', path: '/ReportMissing', icon: 'report' },
+      { name: 'Search Missing', path: '/SearchMissing', icon: 'search' },
+      { name: 'Reports', path: '/SearchReports', icon: 'description' },
+      { name: 'Donate', path: '/donate', icon: 'monetization_on' },
+      { name: 'Profile', path: '/ProfilePage', icon: 'person' },
+      { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
+      { name: 'Security', path: '/Security', icon: 'security' }
+    ];
+
+    const filteredPages = ref([]);
+
+    const handleSearch = (value) => {
+      if (!value?.trim()) {
+        filteredPages.value = [];
+        return;
+      }
+
+      const query = value.toLowerCase();
+      filteredPages.value = availablePages.filter(page => 
+        page.name.toLowerCase().includes(query) || 
+        page.path.toLowerCase().includes(query)
+      );
+    };
+
+    const navigateToPage = (path) => {
+      router.push(path);
+      searchQuery.value = '';
+    };
+
     const fetchUser = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user) {
@@ -151,6 +207,9 @@ export default {
       isMenuOpen,
       burgerMenu,
       toggleMenu,
+      filteredPages,
+      handleSearch,
+      navigateToPage
     };
   },
 };
@@ -205,6 +264,7 @@ $gray: rgb(90, 90, 90);
 }
 
 .search-container {
+  position: relative;
   display: flex;
   align-items: center;
 }
@@ -376,5 +436,54 @@ $gray: rgb(90, 90, 90);
   gap: 10px; /* Adds spacing between icons */
 }
 
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+
+  .no-results {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: #2c3539;
+    border-bottom: 1px solid #eee;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    .page-icon {
+      color: #666;
+    }
+  }
+}
 
 </style>

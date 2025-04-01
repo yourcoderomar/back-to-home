@@ -70,6 +70,12 @@ const routes = [
     name: 'Donate',
     component: () => import('pages/DonationPage.vue')
   },
+  {
+    path: '/checkout',
+    name: 'Checkout',
+    component: () => import('pages/CheckoutPage.vue'),
+    meta: { requiresAuth: true }
+  },
   
   // Always leave this as last one,
   // but you can also remove it
