@@ -36,27 +36,54 @@
               />
             </div>
             <div class="col-12 col-md-3">
-              <q-input
-                v-model="filters.dateRange"
-                label="Date Range"
-                outlined
-                dense
-                clearable
-                mask="date"
-                :rules="['date']"
-              >
-                <template v-slot:append>
-                  <q-icon name="event" class="cursor-pointer">
-                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                      <q-date v-model="filters.dateRange" range>
-                        <div class="row items-center justify-end">
-                          <q-btn v-close-popup label="Close" color="primary" flat />
-                        </div>
-                      </q-date>
-                    </q-popup-proxy>
-                  </q-icon>
-                </template>
-              </q-input>
+              <div class="row q-col-gutter-sm">
+                <div class="col-6">
+                  <q-input
+                    v-model="filters.fromDate"
+                    label="From Date"
+                    outlined
+                    dense
+                    clearable
+                    mask="date"
+                    :rules="['date']"
+                  >
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                          <q-date v-model="filters.fromDate">
+                            <div class="row items-center justify-end">
+                              <q-btn v-close-popup label="Close" color="primary" flat />
+                            </div>
+                          </q-date>
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                  </q-input>
+                </div>
+                <div class="col-6">
+                  <q-input
+                    v-model="filters.toDate"
+                    label="To Date"
+                    outlined
+                    dense
+                    clearable
+                    mask="date"
+                    :rules="['date']"
+                  >
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                          <q-date v-model="filters.toDate">
+                            <div class="row items-center justify-end">
+                              <q-btn v-close-popup label="Close" color="primary" flat />
+                            </div>
+                          </q-date>
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                  </q-input>
+                </div>
+              </div>
             </div>
             <div class="col-12 col-md-3">
               <q-input
@@ -131,7 +158,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { supabase } from 'src/boot/supabase';
 import NavBar from 'src/components/NavBar.vue';
@@ -155,9 +182,15 @@ export default {
     const filters = ref({
       reportType: null,
       status: null,
-      dateRange: null,
+      fromDate: null,
+      toDate: null,
       search: ''
     });
+
+    // Add watch on filters
+    watch(filters, () => {
+      handleSearch();
+    }, { deep: true });
 
     const reportTypes = [
       { label: 'Missing Person', value: 'missing' },
@@ -199,31 +232,44 @@ export default {
 
         // Apply filters to both queries
         if (filters.value.reportType) {
-          console.log('Applying report type filter:', filters.value.reportType.value);
-          if (filters.value.reportType.value === 'missing') {
+          console.log('Applying report type filter:', filters.value.reportType);
+          if (filters.value.reportType === 'missing') {
             foundQuery = foundQuery.limit(0); // Don't get found reports
-          } else if (filters.value.reportType.value === 'found') {
+          } else if (filters.value.reportType === 'found') {
             missingQuery = missingQuery.limit(0); // Don't get missing reports
           }
         }
 
         if (filters.value.status) {
-          console.log('Applying status filter:', filters.value.status.value);
-          missingQuery = missingQuery.eq('status', filters.value.status.value);
-          foundQuery = foundQuery.eq('status', filters.value.status.value);
+          console.log('Applying status filter:', filters.value.status);
+          missingQuery = missingQuery.eq('status', filters.value.status);
+          foundQuery = foundQuery.eq('status', filters.value.status);
         }
 
-        if (filters.value.dateRange) {
-          console.log('Applying date range filter:', filters.value.dateRange);
-          const [startDate, endDate] = filters.value.dateRange.split(' to ');
-          missingQuery = missingQuery.gte('created_at', startDate).lte('created_at', endDate);
-          foundQuery = foundQuery.gte('created_at', startDate).lte('created_at', endDate);
+        if (filters.value.fromDate || filters.value.toDate) {
+          console.log('Applying date range filter:', { from: filters.value.fromDate, to: filters.value.toDate });
+          
+          if (filters.value.fromDate) {
+            missingQuery = missingQuery.filter('reports.created_at', 'gte', filters.value.fromDate);
+            foundQuery = foundQuery.filter('reports.created_at', 'gte', filters.value.fromDate);
+          }
+          
+          if (filters.value.toDate) {
+            // Add one day to include the entire day
+            const endDatePlusOne = new Date(filters.value.toDate);
+            endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+            
+            missingQuery = missingQuery.filter('reports.created_at', 'lt', endDatePlusOne.toISOString());
+            foundQuery = foundQuery.filter('reports.created_at', 'lt', endDatePlusOne.toISOString());
+          }
         }
 
-        if (filters.value.search) {
+        if (filters.value.search && filters.value.search.trim() !== '') {
           console.log('Applying search filter:', filters.value.search);
-          missingQuery = missingQuery.or(`description.ilike.%${filters.value.search}%`);
-          foundQuery = foundQuery.or(`description.ilike.%${filters.value.search}%`);
+          // Search by name and description in missing reports
+          missingQuery = missingQuery.or(`missing_person_name.ilike.%${filters.value.search}%,description.ilike.%${filters.value.search}%`);
+          // Search by name and description in found reports
+          foundQuery = foundQuery.or(`found_person_name.ilike.%${filters.value.search}%,description.ilike.%${filters.value.search}%`);
         }
 
         console.log('Executing queries...');
@@ -264,10 +310,16 @@ export default {
             if (report.photo_url) {
               try {
                 console.log('Processing photo URL for report:', processedReport);
-                const { data: signedUrl } = await supabase.storage
-                  .from('missingimages')
-                  .createSignedUrl(report.photo_url, 3600);
-                processedReport.photo_url = signedUrl.signedUrl;
+                // Check if the URL is already a public URL
+                if (report.photo_url.startsWith('http')) {
+                  processedReport.photo_url = report.photo_url;
+                } else {
+                  // If it's a storage path, get the public URL
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('missingimages')
+                    .getPublicUrl(report.photo_url);
+                  processedReport.photo_url = publicUrl;
+                }
               } catch (error) {
                 console.error('Error processing photo URL:', error);
               }
@@ -295,7 +347,8 @@ export default {
         console.error('Error searching reports:', error);
         $q.notify({
           type: 'negative',
-          message: 'Failed to search reports'
+          message: 'Failed to search reports',
+          position: 'top'
         });
       } finally {
         loading.value = false;
@@ -403,10 +456,13 @@ export default {
   margin-top: auto;
 }
 
+:deep(.q-select) {
+  max-width: 100%;
+}
+
 :deep(.q-field__native) {
   padding: 8px 0;
 }
-
 
 :deep(.q-field__label) {
   font-size: 14px;
@@ -415,6 +471,31 @@ export default {
 
 :deep(.q-field--focused .q-field__label) {
   color: #333;
+}
+
+:deep(.q-menu) {
+  max-width: 300px;
+}
+
+:deep(.q-item) {
+  padding: 8px 16px;
+  min-height: 40px;
+}
+
+:deep(.q-field__control) {
+  height: 40px;
+}
+
+:deep(.q-field__marginal) {
+  height: 40px;
+}
+
+:deep(.q-field__bottom) {
+  padding: 4px 0 0 0;
+}
+
+:deep(.q-field__messages) {
+  font-size: 12px;
 }
 
 :deep(.q-item) {
@@ -453,8 +534,6 @@ export default {
   color: #666;
   font-size: 13px;
 }
-
-
 
 :deep(.filters-section .q-field--focused) {
   border-color: #00bfff;
