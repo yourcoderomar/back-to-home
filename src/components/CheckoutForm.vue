@@ -3,6 +3,7 @@
     <HeroSection 
     title="Checkout"
     />
+    <ToastNotification ref="toastRef" />
     <div class="row q-col-gutter-md">
       <!-- Left Side - Billing Info -->
       <div class="col-12 col-md-8">
@@ -168,7 +169,8 @@
                 class="full-width q-mt-md"
                 color="primary"
                 :label="type === 'donation' ? 'COMPLETE DONATION' : 'UPGRADE PLAN'"
-                :disable="!termsAccepted"
+                :disable="!termsAccepted || isProcessing"
+                :loading="isProcessing"
                 @click="handleCheckout"
               />
             </div>
@@ -180,13 +182,17 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref} from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from 'src/boot/supabase'
 import HeroSection from './HeroSection.vue'
+import ToastNotification from './ToastNotification.vue'
 
 export default {
   name: 'CheckoutForm',
   components: {
-    HeroSection
+    HeroSection,
+    ToastNotification
   },
   props: {
     amount: {
@@ -200,6 +206,14 @@ export default {
     }
   },
   setup(props) {
+    const router = useRouter()
+    const toastRef = ref(null)
+    
+    const showToast = (message, type) => {
+      if (toastRef.value) {
+        toastRef.value.showToast(message, type)
+      }
+    }
     
     const firstName = ref('')
     const lastName = ref('')
@@ -215,6 +229,7 @@ export default {
     const notes = ref('')
     const termsAccepted = ref(false)
     const paymentMethod = ref('bank')
+    const isProcessing = ref(false)
     
     const countries = ['United Kingdom', 'United States', 'Canada', 'Australia']
     
@@ -239,34 +254,104 @@ export default {
     ]
     
     const handleCheckout = async () => {
+      if (!termsAccepted.value) {
+        showToast('Please accept the terms and conditions', 'error')
+        return
+      }
+
+      isProcessing.value = true
+
       try {
-        // Here you would implement the actual payment processing
-        // For now, we'll just show a success message
-        const orderData = {
-          firstName: firstName.value,
-          lastName: lastName.value,
-          companyName: companyName.value,
-          country: country.value,
-          address: address.value,
-          apartment: apartment.value,
-          city: city.value,
-          state: state.value,
-          postcode: postcode.value,
-          email: email.value,
-          phone: phone.value,
-          notes: notes.value,
-          amount: props.amount,
-          paymentMethod: paymentMethod.value,
-          type: props.type
+        // Get current user
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+          throw new Error('User not authenticated')
         }
-        
-        console.log('Order placed:', orderData)
-        // You would typically send this to your backend
-        
-        // Show success message
-        // Redirect to success page or dashboard
+
+        // Create payment record
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .insert([
+            {
+              user_id: user.id,
+              amount: props.amount,
+              payment_type: props.type,
+              payment_method: paymentMethod.value,
+              status: 'pending',
+              billing_info: {
+                first_name: firstName.value,
+                last_name: lastName.value,
+                company: companyName.value,
+                country: country.value,
+                address: address.value,
+                apartment: apartment.value,
+                city: city.value,
+                state: state.value,
+                postcode: postcode.value,
+                email: email.value,
+                phone: phone.value,
+                notes: notes.value
+              }
+            }
+          ])
+          .select()
+          .single()
+
+        if (paymentError) throw paymentError
+
+        // Process payment based on selected method
+        let paymentSuccess = false
+        switch (paymentMethod.value) {
+          case 'bank':
+            // For bank transfer, we'll just mark it as pending
+            paymentSuccess = true
+            break
+          case 'cheque':
+            // For cheque, we'll just mark it as pending
+            paymentSuccess = true
+            break
+          case 'paypal':
+            // Here you would integrate with PayPal API
+            // For now, we'll simulate a successful payment
+            paymentSuccess = true
+            break
+        }
+
+        if (paymentSuccess) {
+          // Update payment status
+          await supabase
+            .from('payments')
+            .update({ status: 'completed' })
+            .eq('id', payment.id)
+
+          // If this is a plan upgrade, update the user's plan
+          if (props.type === 'premium') {
+            const { error: planError } = await supabase
+              .from('users')
+              .update({ 
+                user_plan: 2, // Assuming 2 is the ID for pro plan
+                plan_start_date: new Date().toISOString()
+              })
+              .eq('user_id', user.id)
+
+            if (planError) throw planError
+          }
+
+          showToast(
+            props.type === 'premium' 
+              ? 'Plan upgrade successful! Welcome to Pro!' 
+              : 'Thank you for your donation!',
+            'success'
+          )
+
+          // Redirect to profile page
+          router.push('/profile')
+        }
       } catch (error) {
         console.error('Checkout error:', error)
+        showToast('An error occurred during checkout. Please try again.', 'error')
+      } finally {
+        isProcessing.value = false
       }
     }
     
@@ -275,7 +360,6 @@ export default {
       lastName,
       companyName,
       country,
-      countries,
       address,
       apartment,
       city,
@@ -286,8 +370,11 @@ export default {
       notes,
       termsAccepted,
       paymentMethod,
+      isProcessing,
+      countries,
       paymentOptions,
-      handleCheckout
+      handleCheckout,
+      toastRef
     }
   }
 }

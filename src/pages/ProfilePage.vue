@@ -54,6 +54,14 @@
               label="Upgrade Plan" 
               @click="router.push('/MyPlan')"
             />
+            <q-btn 
+              v-if="userPlan.plan_name === 'pro'"
+              unelevated 
+              rounded 
+              class="delete-subscription-btn" 
+              label="Delete Subscription" 
+              @click="deleteSubscription"
+            />
           </div>
           <div class="plan-features">
             <div class="feature-item">
@@ -169,6 +177,29 @@ export default {
       router.push("/SignIn");
     };
 
+    const deleteSubscription = async () => {
+      try {
+        const { data: authUser, error: authError } = await supabase.auth.getUser();
+        if (authError || !authUser?.user) {
+          router.push("/SignIn");
+          return;
+        }
+
+        // Update user's plan to free
+        const { error } = await supabase
+          .from("users")
+          .update({ user_plan: 1 }) // Assuming 1 is the ID for free plan
+          .eq("user_id", authUser.user.id);
+
+        if (error) throw error;
+
+        // Refresh user data
+        await fetchUser();
+      } catch (err) {
+        console.error("Error deleting subscription:", err);
+      }
+    };
+
     onMounted(fetchUser);
 
     return { 
@@ -176,7 +207,8 @@ export default {
       userAvatar,
       userPlan,
       router,
-      logout
+      logout,
+      deleteSubscription
     };
   }
 };
@@ -303,6 +335,12 @@ export default {
 .upgrade-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0,191,255,0.3);
+}
+
+.delete-subscription-btn {
+  background: #ff4444;
+  color: #fff;
+  font-weight: 600;
 }
 
 .plan-features {
