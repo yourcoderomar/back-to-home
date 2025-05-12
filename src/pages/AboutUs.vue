@@ -1,36 +1,38 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import FooterComponent from 'src/components/Footer.vue';
-import NavBar from 'src/components/NavBar.vue';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import { ref, onMounted } from 'vue'
+import FooterComponent from 'src/components/Footer.vue'
+import NavBar from 'src/components/NavBar.vue'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
 
-const aboutText = "Back2Home is a dedicated platform created by graduating students to address the critical issue of missing persons. What started as an academic project has evolved into a powerful tool that combines advanced technology with compassionate service to help reunite families.";
+const aboutText =
+  'Back2Home is a dedicated platform created by graduating students to address the critical issue of missing persons. What started as an academic project has evolved into a powerful tool that combines advanced technology with compassionate service to help reunite families.'
 
-const teamText = "Our team consists of dedicated individuals who bring diverse skills and unwavering commitment to the mission of finding missing persons. Together, we work to make every search count and every reunion possible.";
+const teamText =
+  'Our team consists of dedicated individuals who bring diverse skills and unwavering commitment to the mission of finding missing persons. Together, we work to make every search count and every reunion possible.'
 
 const teamMembers = ref([
   {
     name: 'Team Member 1',
-    image: '/images/omar.jpg'
+    image: '/images/omar.jpg',
   },
   {
     name: 'Team Member 2',
-    image: '/images/omar.jpg'
+    image: '/images/omar.jpg',
   },
   {
     name: 'Team Member 3',
-    image: '/images/omar.jpg'
-  }
-]);
+    image: '/images/omar.jpg',
+  },
+])
 
 onMounted(() => {
   AOS.init({
     duration: 800,
     once: true,
-    offset: 100
-  });
-});
+    offset: 100,
+  })
+})
 </script>
 
 <template>
@@ -40,7 +42,7 @@ onMounted(() => {
     <!-- About Section -->
     <div class="about-section" id="about">
       <h1 class="page-title" data-aos="fade-down">ABOUT US.</h1>
-      
+
       <div class="content-block">
         <p class="large-text" data-aos="fade-up" data-aos-delay="100">
           {{ aboutText }}
@@ -49,7 +51,7 @@ onMounted(() => {
 
       <!-- Full Width Image -->
       <div class="full-width-image" data-aos="zoom-in">
-        <img src="/images/search.jpg" alt="Team working together" />
+        <img src="/images/habal.jpg" alt="Team working together" />
       </div>
 
       <!-- Quote Section -->
@@ -61,7 +63,7 @@ onMounted(() => {
           <cite>Jean-Philippe Nuel, Director</cite>
         </div>
         <div class="quote-image" data-aos="fade-left">
-          <img src="/images/search.jpg" alt="Working on wall" />
+          <img src="/images/5.jpg" alt="Working on wall" />
         </div>
       </div>
     </div>
@@ -69,7 +71,7 @@ onMounted(() => {
     <!-- Team Section -->
     <div class="team-section" id="team">
       <h2 class="section-title" data-aos="fade-down">THE TEAM.</h2>
-      
+
       <div class="team-description">
         <p class="large-text" data-aos="fade-up" data-aos-delay="100">
           {{ teamText }}
@@ -78,22 +80,31 @@ onMounted(() => {
 
       <!-- Team Grid -->
       <div class="team-grid">
-        <div v-for="(member, index) in teamMembers" 
-             :key="index" 
-             class="team-member"
-             :data-aos="'fade-up'"
-             :data-aos-delay="index * 100">
+        <div
+          v-for="(member, index) in teamMembers"
+          :key="index"
+          class="team-member"
+          :data-aos="'fade-up'"
+          :data-aos-delay="index * 100"
+        >
           <img :src="member.image" :alt="member.name" />
         </div>
       </div>
 
       <!-- Statistics -->
       <div class="statistics">
-        <div v-for="(stat, index) in ['Missing reports handled', 'Cases resolved', 'Million database entries', 'Active volunteers']" 
-             :key="index" 
-             class="stat-item"
-             :data-aos="'fade-up'"
-             :data-aos-delay="index * 100">
+        <div
+          v-for="(stat, index) in [
+            'Missing reports handled',
+            'Cases resolved',
+            'Million database entries',
+            'Active volunteers',
+          ]"
+          :key="index"
+          class="stat-item"
+          :data-aos="'fade-up'"
+          :data-aos-delay="index * 100"
+        >
           <h3>{{ [600, 700, 1.2, 110][index] }}</h3>
           <p>{{ stat }}</p>
         </div>

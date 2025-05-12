@@ -208,22 +208,12 @@ export default {
 
           const fileExt = file.name.split('.').pop()
           const fileName = `${Date.now()}.${fileExt}`
-          const filePath = `missing_persons/${fileName}`
 
-          console.log('📤 Uploading file to Supabase at path:', filePath)
-
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
-          if (!session) {
-            console.error('❌ User not authenticated')
-            this.$refs.toast.showToast('Please log in to upload images.', 'error')
-            return
-          }
+          console.log('📤 Uploading file to Supabase at path:', fileName)
 
           const { error: uploadError } = await supabase.storage
             .from('foundimages')
-            .upload(filePath, file)
+            .upload(fileName, file)
 
           if (uploadError) {
             console.error('❌ File upload error:', uploadError.message)
@@ -234,7 +224,7 @@ export default {
           // ✅ Retrieve public URL
           const {
             data: { publicUrl },
-          } = supabase.storage.from('foundimages').getPublicUrl(filePath)
+          } = supabase.storage.from('foundimages').getPublicUrl(fileName)
 
           if (!publicUrl) {
             console.error('❌ Error retrieving image URL.')

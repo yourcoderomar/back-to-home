@@ -15,7 +15,7 @@
 
       <div class="card-price">
         <p>
-          <span class="price">${{ price }}</span>
+          <span class="price">LE{{ price }}</span>
           <span class="price-period"> /mo </span>
         </p>
       </div>

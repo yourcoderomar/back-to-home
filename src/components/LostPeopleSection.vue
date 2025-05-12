@@ -2,67 +2,73 @@
   <section ref="sectionRef" class="lost-people-section q-pa-lg row items-center">
     <!-- Left: Image with AOS animation -->
     <div class="col-md-6 col-12 flex flex-center">
-      <q-img src="images/search.jpg" class="image-style" data-aos="fade-right" data-aos-duration="1000" />
+      <q-img
+        src="images/2.jpg"
+        class="image-style"
+        data-aos="fade-right"
+        data-aos-duration="1000"
+      />
     </div>
 
     <!-- Right: Text & Number -->
     <div class="col-md-6 col-12 text-container">
-      <div class="text-h5 text-bold fade-in" :class="{ 'show': isVisible }">
+      <div class="text-h5 text-bold fade-in" :class="{ show: isVisible }">
         Every day, approximately
         <span class="text-primary">{{ animatedNumber.toFixed(0) }}</span>
         people go missing in Egypt.
       </div>
-      <p class="fade-in delay" :class="{ 'show': isVisible }">
-        Many of these cases involve children, elderly individuals, and those suffering from memory disorders. Raising awareness and community efforts can help reunite families.
+      <p class="fade-in delay" :class="{ show: isVisible }">
+        Many of these cases involve children, elderly individuals, and those suffering from memory
+        disorders. Raising awareness and community efforts can help reunite families.
       </p>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import { ref, onMounted } from 'vue'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
 
-const animatedNumber = ref(0);
-const targetNumber = ref(50); // Adjust the number based on research
-const duration = 4000; // 2 seconds animation
-const isVisible = ref(false);
-const sectionRef = ref(null);
+const animatedNumber = ref(0)
+const targetNumber = ref(50) // Adjust the number based on research
+const duration = 4000 // 2 seconds animation
+const isVisible = ref(false)
+const sectionRef = ref(null)
 
 const startAnimation = () => {
-  const startTime = performance.now();
-  const initialNumber = animatedNumber.value;
+  const startTime = performance.now()
+  const initialNumber = animatedNumber.value
 
   const updateNumber = (currentTime) => {
-    const elapsedTime = currentTime - startTime;
+    const elapsedTime = currentTime - startTime
     if (elapsedTime < duration) {
-      const progress = elapsedTime / duration;
-      animatedNumber.value = initialNumber + (targetNumber.value - initialNumber) * progress;
-      requestAnimationFrame(updateNumber);
+      const progress = elapsedTime / duration
+      animatedNumber.value = initialNumber + (targetNumber.value - initialNumber) * progress
+      requestAnimationFrame(updateNumber)
     } else {
-      animatedNumber.value = targetNumber.value;
+      animatedNumber.value = targetNumber.value
     }
-  };
+  }
 
-  requestAnimationFrame(updateNumber);
-};
+  requestAnimationFrame(updateNumber)
+}
 
 // Trigger animation and fade-in effect when section becomes visible
 onMounted(() => {
-  AOS.init();
+  AOS.init()
 
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) {
-      isVisible.value = true;
-      startAnimation();
+      isVisible.value = true
+      startAnimation()
     }
-  });
+  })
 
   if (sectionRef.value) {
-    observer.observe(sectionRef.value);
+    observer.observe(sectionRef.value)
   }
-});
+})
 </script>
 
 <style scoped>
@@ -84,7 +90,9 @@ onMounted(() => {
 .fade-in {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 1s ease-out, transform 1s ease-out;
+  transition:
+    opacity 1s ease-out,
+    transform 1s ease-out;
 }
 
 .fade-in.show {

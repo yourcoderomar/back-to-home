@@ -1,65 +1,80 @@
-import { defineRouter } from "#q-app/wrappers";
+import { defineRouter } from '#q-app/wrappers'
 import {
   createRouter,
   createMemoryHistory,
   createWebHistory,
   createWebHashHistory,
-} from "vue-router";
-import { supabase } from "src/boot/supabase";
-import routes from "./routes";
+} from 'vue-router'
+import { supabase } from 'src/boot/supabase'
+import routes from './routes'
 
 export default defineRouter(function () {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : process.env.VUE_ROUTER_MODE === "history"
-    ? createWebHistory
-    : createWebHashHistory;
+    : process.env.VUE_ROUTER_MODE === 'history'
+      ? createWebHistory
+      : createWebHashHistory
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
     history: createHistory(process.env.VUE_ROUTER_BASE),
-  });
+  })
 
   Router.beforeEach(async (to, from, next) => {
-    console.log(`🔄 Checking route: ${to.path}`);
-
     try {
       // Fetch the latest session
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("✅ Supabase session:", session);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      // Get the authenticated user (needed to confirm login)
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user || null;
-
-      console.log("👤 User:", user);
+      // Get the authenticated user
+      const { data: userData } = await supabase.auth.getUser()
+      const user = userData?.user || null
 
       // Ensure that we detect logout correctly
-      const isAuthenticated = session && user;
+      const isAuthenticated = session && user
+
+      // Check if user is admin
+      let isAdmin = false
+      if (isAuthenticated) {
+        try {
+          const { data: adminData } = await supabase
+            .from('admins')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          isAdmin = !!adminData
+        } catch (error) {
+          console.error('Error checking admin status:', error)
+        }
+      }
 
       // 🔒 Redirect guests trying to access protected pages
       if (!isAuthenticated && to.meta.requiresAuth) {
-        console.log("🔑 Not authenticated, redirecting to /signin");
-        // Store the attempted route in query params
         return next({
-          path: "/signin",
-          query: { redirect: to.fullPath }, // Store the original route in query params
-        });
+          path: '/signin',
+          query: { redirect: to.fullPath },
+        })
       }
 
-      // 🚀 Redirect logged-in users away from guest-only pages (e.g., Sign-In)
+      // 🚫 Redirect non-admin users trying to access admin pages
+      if (to.meta.requiresAdmin && !isAdmin) {
+        return next('/')
+      }
+
+      // 🚀 Redirect logged-in users away from guest-only pages
       if (isAuthenticated && to.meta.requiresGuest) {
-        console.log("🚀 Already signed in, redirecting to /");
-        return next("/"); // Redirect to home if already authenticated
+        return next('/')
       }
 
-      next(); // Allow navigation if no redirection is needed
+      next()
     } catch (error) {
-      console.error("❌ Router error:", error);
-      next(); // Let the user navigate if there's an error
+      console.error('Navigation error:', error)
+      next('/')
     }
-  });
+  })
 
-  return Router;
-});
+  return Router
+})

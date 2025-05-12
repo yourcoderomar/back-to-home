@@ -1,35 +1,58 @@
 <template>
-  <div>
+  <div class="profile-picture-container">
     <!-- Avatar that opens the modal -->
-    <q-avatar size="180px" class="cursor-pointer" @click="showModal = true">
-      <img :src="userAvatar || defaultAvatar" alt="User Avatar" class="avatar-img" />
+    <q-avatar size="150px" class="cursor-pointer" @click="showModal = true">
+      <img
+        :src="userAvatar || defaultAvatar"
+        alt="User Avatar"
+        class="avatar-img"
+        @error="handleImageError"
+        @load="handleImageLoad"
+      />
     </q-avatar>
 
     <!-- Hidden file input for selecting a new image -->
-    <input type="file" ref="fileInput" style="display: none" @change="handleFileUpload" />
+    <input
+      type="file"
+      ref="fileInput"
+      style="display: none"
+      @change="handleFileUpload"
+      accept="image/*"
+    />
 
     <!-- Modal Dialog -->
-    <q-dialog v-model="showModal">
-      <div class="modal-overlay">
-        <!-- Image Wrapper (Same size as the image) -->
-        <div class="image-container">
-          <!-- Full Image -->
-          <img :src="userAvatar || defaultAvatar" alt="Profile Picture" class="modal-image" />
+    <q-dialog v-model="showModal" persistent>
+      <q-card class="profile-modal">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Update Profile Picture</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
 
-          <!-- Close Button in Top-Right of Image -->
-          <q-btn icon="close" class="close-btn" @click="showModal = false" />
+        <q-card-section class="q-pt-md">
+          <div class="modal-image-container">
+            <img
+              :src="userAvatar || defaultAvatar"
+              alt="Profile Picture"
+              class="modal-image"
+              @error="handleImageError"
+              @load="handleImageLoad"
+            />
+          </div>
+        </q-card-section>
 
-          <!-- Change Picture Button Inside Image -->
-          <q-btn color="primary" label="Change Picture" class="change-btn" @click="uploadImage" />
-        </div>
-      </div>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn unelevated color="primary" label="Change Picture" @click="uploadImage" />
+        </q-card-actions>
+      </q-card>
     </q-dialog>
   </div>
 </template>
 
 <script>
-import { ref, watch } from "vue";
-import { supabase } from "src/boot/supabase";
+import { ref, watch } from 'vue'
+import { supabase } from 'src/boot/supabase'
 
 export default {
   props: {
@@ -37,52 +60,79 @@ export default {
     initialAvatar: String,
   },
   setup(props, { emit }) {
-    const showModal = ref(false);
-    const fileInput = ref(null);
-    const userAvatar = ref(props.initialAvatar);
-    const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+    const showModal = ref(false)
+    const fileInput = ref(null)
+    const userAvatar = ref(props.initialAvatar)
+    const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
 
-    watch(() => props.initialAvatar, (newAvatar) => {
-      userAvatar.value = newAvatar;
-    });
+    const handleImageError = () => {
+      userAvatar.value = defaultAvatar
+    }
+
+    const handleImageLoad = () => {
+      // Image loaded successfully
+    }
+
+    watch(
+      () => props.initialAvatar,
+      (newAvatar) => {
+        userAvatar.value = newAvatar
+      },
+    )
 
     const uploadImage = () => {
-      fileInput.value.click();
-    };
+      fileInput.value.click()
+    }
 
     const handleFileUpload = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+      const file = event.target.files[0]
+      if (!file) return
 
-      const filePath = `avatars/${props.userId}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from("profilepictures")
-        .upload(filePath, file, { upsert: true });
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}.${fileExt}`
 
-      if (uploadError) {
-        console.error("File upload error:", uploadError);
-        return;
-      }
+      try {
+        // Upload the file
+        const { error: uploadError } = await supabase.storage
+          .from('profilepictures')
+          .upload(fileName, file, {
+            upsert: true,
+            cacheControl: '3600',
+            contentType: file.type,
+          })
 
-      const { data: urlData } = supabase.storage.from("profilepictures").getPublicUrl(filePath);
-      if (urlData.publicUrl) {
-        userAvatar.value = urlData.publicUrl;
-
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ profile_picture: urlData.publicUrl })
-          .eq("user_id", props.userId);
-
-        if (updateError) {
-          console.error("Database update error:", updateError);
-          return;
+        if (uploadError) {
+          console.error('File upload error:', uploadError)
+          return
         }
 
-        emit("updateAvatar", urlData.publicUrl);
-      }
+        // Get the public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('profilepictures').getPublicUrl(fileName)
 
-      showModal.value = false;
-    };
+        if (publicUrl) {
+          // Update the user's profile picture in the database
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ profile_picture: publicUrl })
+            .eq('user_id', props.userId)
+
+          if (updateError) {
+            console.error('Database update error:', updateError)
+            return
+          }
+
+          // Update the local state
+          userAvatar.value = publicUrl
+          emit('updateAvatar', publicUrl)
+        }
+
+        showModal.value = false
+      } catch (error) {
+        console.error('Error during file upload:', error)
+      }
+    }
 
     return {
       showModal,
@@ -91,89 +141,59 @@ export default {
       defaultAvatar,
       uploadImage,
       handleFileUpload,
-    };
+      handleImageError,
+      handleImageLoad,
+    }
   },
-};
+}
 </script>
 
 <style scoped>
-/* Small Circular Avatar when Modal is Closed */
+.profile-picture-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 3px solid white;
-  background-color: #f0f0f0;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
 }
 
-/* Modal Overlay (Same Size as Image) */
-.modal-overlay {
+.avatar-img:hover {
+  transform: scale(1.02);
+}
+
+.profile-modal {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+}
+
+.modal-image-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  padding: 16px;
 }
 
-/* Image Wrapper (Same Size as Image) */
-.image-container {
-  position: relative;
-  max-width: 500px;
-  width: 100%;
-}
-
-/* Full Image */
 .modal-image {
   width: 100%;
-  max-height: 60vh;
+  max-height: 400px;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-/* Remove default background and shadow */
+
+/* Remove default Quasar button styles */
 .q-btn::before {
   background: none !important;
   box-shadow: none !important;
-}
-
-
-/* Close Button in Top-Right of Image */
-.close-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none !important;  /* Ensure no background */
-  box-shadow: none !important;  /* Remove default Quasar shadow */
-  color: red;
-  font-size: 22px;
-  width: 35px;
-  height: 35px;
-  min-width: unset; /* Removes unnecessary spacing */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  border: none; /* Remove any possible border */
-}
-
-/* Removes default hover effect */
-.close-btn:hover {
-  background: none !important;
-  box-shadow: none !important;
-}
-
-
-/* Change Picture Button Inside Image */
-.change-btn {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  font-size: 14px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  cursor: pointer;
 }
 </style>

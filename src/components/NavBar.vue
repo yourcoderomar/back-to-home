@@ -1,5 +1,5 @@
 <template>
-  <header :class="{ 'navbar': true, 'transparent-nav': isTransparent }">
+  <header :class="{ navbar: true, 'transparent-nav': isTransparent }">
     <!-- Logo -->
     <router-link to="/" class="logo-link">
       <img src="/images/logo.png" alt="Logo" class="logo" />
@@ -10,29 +10,23 @@
       <div class="show-on-desktop">
         <div class="search-container">
           <q-icon name="search" class="search-icon" />
-          <q-input 
-            v-model="searchQuery" 
-            class="search-box" 
-            placeholder="Search..." 
-            dense 
+          <q-input
+            v-model="searchQuery"
+            class="search-box"
+            placeholder="Search..."
+            dense
             standout
             @update:model-value="handleSearch"
           />
           <!-- Search Results Dropdown -->
           <div v-show="searchQuery" class="search-dropdown">
             <ul v-if="filteredPages.length > 0">
-              <li 
-                v-for="page in filteredPages" 
-                :key="page.path"
-                @click="navigateToPage(page.path)"
-              >
+              <li v-for="page in filteredPages" :key="page.path" @click="navigateToPage(page.path)">
                 <q-icon :name="page.icon" class="page-icon" />
                 {{ page.name }}
               </li>
             </ul>
-            <div v-else class="no-results">
-              No results found
-            </div>
+            <div v-else class="no-results">No results found</div>
           </div>
         </div>
         <router-link to="/AboutUs" class="nav-link">About us</router-link>
@@ -40,6 +34,9 @@
         <router-link to="/ReportMissing" class="nav-link">Report</router-link>
         <router-link to="/SearchMissing" class="nav-link">Search</router-link>
         <router-link to="/SearchReports" class="nav-link">Reports</router-link>
+        <router-link v-if="isAdmin" to="/admin" class="nav-link admin-link">
+          <q-icon name="admin_panel_settings" /> Admin
+        </router-link>
         <router-link to="/donate" class="donate-btn">
           <q-icon name="monetization_on" /> Donate
         </router-link>
@@ -70,7 +67,7 @@
       <!-- Sign In / Sign Up Dropdown -->
       <q-btn-dropdown v-else flat round dense class="icon-btn">
         <template v-slot:label>
-          <q-icon name="person" size="32px" style="color: #2C3539;" />
+          <q-icon name="person" size="32px" style="color: #2c3539" />
         </template>
         <q-list>
           <q-item clickable v-close-popup @click="goToSignIn">
@@ -83,7 +80,12 @@
       </q-btn-dropdown>
 
       <!-- Burger Menu (Mobile) -->
-      <div v-if="$q.screen.lt.md" class="burger-icon" @click="toggleMenu" :class="{ 'is-menu-open': isMenuOpen }">
+      <div
+        v-if="$q.screen.lt.md"
+        class="burger-icon"
+        @click="toggleMenu"
+        :class="{ 'is-menu-open': isMenuOpen }"
+      >
         <div></div>
         <div></div>
         <div></div>
@@ -97,11 +99,11 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { supabase } from "src/boot/supabase";
-import BurgerMenu from "./BurgerMenu.vue";
-import NotificationComponent from "./NotificationComponent.vue";
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { supabase } from 'src/boot/supabase'
+import BurgerMenu from './BurgerMenu.vue'
+import NotificationComponent from './NotificationComponent.vue'
 
 export default {
   components: {
@@ -109,15 +111,16 @@ export default {
     NotificationComponent,
   },
   setup() {
-    const router = useRouter();
-    const route = useRoute();
-    const searchQuery = ref("");
-    const isTransparent = ref(false);
-    const burgerMenu = ref(null);
-    const isMenuOpen = ref(false);
-    const user = ref(null);
-    const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-    const userAvatar = ref(defaultAvatar);
+    const router = useRouter()
+    const route = useRoute()
+    const searchQuery = ref('')
+    const isTransparent = ref(false)
+    const burgerMenu = ref(null)
+    const isMenuOpen = ref(false)
+    const user = ref(null)
+    const isAdmin = ref(false)
+    const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+    const userAvatar = ref(defaultAvatar)
 
     // Define available pages for search
     const availablePages = [
@@ -129,77 +132,105 @@ export default {
       { name: 'Donate', path: '/donate', icon: 'monetization_on' },
       { name: 'Profile', path: '/ProfilePage', icon: 'person' },
       { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
-      { name: 'Security', path: '/Security', icon: 'security' }
-    ];
+      { name: 'Security', path: '/Security', icon: 'security' },
+      { name: 'Admin Dashboard', path: '/admin', icon: 'admin_panel_settings' },
+    ]
 
-    const filteredPages = ref([]);
+    const filteredPages = ref([])
 
     const handleSearch = (value) => {
       if (!value?.trim()) {
-        filteredPages.value = [];
-        return;
+        filteredPages.value = []
+        return
       }
 
-      const query = value.toLowerCase();
-      filteredPages.value = availablePages.filter(page => 
-        page.name.toLowerCase().includes(query) || 
-        page.path.toLowerCase().includes(query)
-      );
-    };
+      const query = value.toLowerCase()
+      filteredPages.value = availablePages.filter(
+        (page) =>
+          page.name.toLowerCase().includes(query) || page.path.toLowerCase().includes(query),
+      )
+    }
 
     const navigateToPage = (path) => {
-      router.push(path);
-      searchQuery.value = '';
-    };
-
-    const fetchUser = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user) {
-        user.value = userData.user;
-        fetchUserAvatar(userData.user.id);
-      }
-    };
+      router.push(path)
+      searchQuery.value = ''
+    }
 
     const fetchUserAvatar = async (userId) => {
-      const { data } = await supabase.from("users").select("profile_picture").eq("user_id", userId).single();
-      userAvatar.value = data?.profile_picture || defaultAvatar;
-    };
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('profile_picture')
+          .eq('user_id', userId)
+          .maybeSingle()
 
-    const goToProfile = () => router.push("/ProfilePage");
-    const goToSignIn = () => router.push("/SignIn");
-    const goToSignUp = () => router.push("/SignUp");
+        if (error) {
+          console.error('Error fetching avatar:', error)
+          throw error
+        }
+
+        userAvatar.value = data?.profile_picture || defaultAvatar
+      } catch (error) {
+        console.error('Error in fetchUserAvatar:', error)
+        userAvatar.value = defaultAvatar
+      }
+    }
+
+    const fetchUser = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+      if (userData?.user) {
+        user.value = userData.user
+        await fetchUserAvatar(userData.user.id)
+
+        // Check if user is admin
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('id')
+          .eq('user_id', userData.user.id)
+          .maybeSingle()
+
+        isAdmin.value = !!adminData
+      }
+    }
+
+    const goToProfile = () => router.push('/ProfilePage')
+    const goToSignIn = () => router.push('/SignIn')
+    const goToSignUp = () => router.push('/SignUp')
 
     const handleLogout = async () => {
-      await supabase.auth.signOut();
-      user.value = null;
-      userAvatar.value = defaultAvatar;
-      router.push("/SignIn");
-    };
+      await supabase.auth.signOut()
+      user.value = null
+      userAvatar.value = defaultAvatar
+      router.push('/SignIn')
+    }
 
     const toggleMenu = () => {
-      isMenuOpen.value = !isMenuOpen.value;
-      burgerMenu.value?.toggleMenu();
-    };
+      isMenuOpen.value = !isMenuOpen.value
+      burgerMenu.value?.toggleMenu()
+    }
 
     const handleScroll = () => {
-      isTransparent.value = ["/", "/SignIn", "/SignUp"].includes(route.path) && window.scrollY < window.innerHeight * 0.5;
-    };
+      isTransparent.value =
+        ['/', '/SignIn', '/SignUp'].includes(route.path) &&
+        window.scrollY < window.innerHeight * 0.5
+    }
 
     onMounted(() => {
-      fetchUser();
-      handleScroll();
-      window.addEventListener("scroll", handleScroll);
-    });
+      fetchUser()
+      handleScroll()
+      window.addEventListener('scroll', handleScroll)
+    })
 
     onUnmounted(() => {
-      window.removeEventListener("scroll", handleScroll);
-    });
+      window.removeEventListener('scroll', handleScroll)
+    })
 
     return {
       searchQuery,
       isTransparent,
       user,
       userAvatar,
+      isAdmin,
       goToProfile,
       goToSignIn,
       goToSignUp,
@@ -209,12 +240,11 @@ export default {
       toggleMenu,
       filteredPages,
       handleSearch,
-      navigateToPage
-    };
+      navigateToPage,
+    }
   },
-};
+}
 </script>
-
 
 <style lang="scss" scoped>
 $link-color: #49596b;
@@ -237,7 +267,9 @@ $gray: rgb(90, 90, 90);
   z-index: 999;
   border-radius: 16px;
   height: 70px;
-  transition: background 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+  transition:
+    background 0.5s ease-in-out,
+    box-shadow 0.5s ease-in-out;
 }
 
 /* Push content down to avoid overlap */
@@ -338,9 +370,11 @@ $gray: rgb(90, 90, 90);
 .burger-icon div {
   width: 100%;
   height: 4px;
-  background-color: #2C3539;
+  background-color: #2c3539;
   border-radius: 3px;
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.3s ease-in-out;
 }
 
 /* 🔥 Smooth "X" Animation */
@@ -370,7 +404,6 @@ $gray: rgb(90, 90, 90);
   .show-on-desktop {
     display: none;
   }
-  
 }
 
 @media (max-width: 768px) {
@@ -422,11 +455,13 @@ $gray: rgb(90, 90, 90);
 }
 
 /* Smooth Fade Animation */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s;
 }
 
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 
@@ -486,4 +521,22 @@ $gray: rgb(90, 90, 90);
   }
 }
 
+.admin-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #49596b;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: rgba(73, 89, 107, 0.1);
+  }
+
+  .q-icon {
+    font-size: 20px;
+  }
+}
 </style>

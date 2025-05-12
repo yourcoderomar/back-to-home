@@ -61,7 +61,7 @@ export default {
         },
         {
           title: "Pro",
-          price: 350,
+          price: 400,
           features: ["Advanced Analytics", "Priority Support", "Custom Reports"],
         },
       ],
