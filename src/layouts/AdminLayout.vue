@@ -4,17 +4,49 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" @click="toggleLeftDrawer" class="menu-btn" />
         <q-toolbar-title class="text-weight-bold">Admin Dashboard</q-toolbar-title>
-        <q-btn flat round dense icon="notifications" class="header-btn">
-          <q-badge color="red" floating>2</q-badge>
-        </q-btn>
-        <q-btn flat round dense icon="person" class="header-btn" />
+
+        <!-- Breadcrumbs -->
+        <div class="breadcrumbs">
+          <q-breadcrumbs>
+            <q-breadcrumbs-el icon="home" to="/admin/dashboard" label="Home" />
+            <q-breadcrumbs-el :label="currentPage" />
+          </q-breadcrumbs>
+        </div>
+
+        <NotificationComponent />
+        <q-btn-dropdown v-if="user" flat round dense class="header-btn">
+          <template v-slot:label>
+            <q-avatar size="32px">
+              <img :src="userAvatar" alt="User Avatar" class="avatar-img" />
+            </q-avatar>
+          </template>
+          <q-list>
+            <q-item clickable v-close-popup @click="goToProfile">
+              <q-item-section>Profile</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="handleLogout">
+              <q-item-section>Logout</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="admin-drawer" :width="280">
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      bordered
+      class="admin-drawer"
+      :width="280"
+      :breakpoint="400"
+      :behavior="'desktop'"
+      persistent
+      :mini="!leftDrawerOpen"
+    >
       <q-list padding class="drawer-list">
         <q-item-label header class="drawer-header">Navigation</q-item-label>
 
+        <!-- Main Navigation -->
         <q-item
           clickable
           v-ripple
@@ -55,17 +87,25 @@
           <q-item-section>Reports</q-item-section>
         </q-item>
 
+        <q-separator class="q-my-md" />
+
+        <!-- Recent Section -->
+        <q-item-label header class="drawer-header">Recent</q-item-label>
         <q-item
+          v-for="(item, index) in recentItems"
+          :key="index"
           clickable
           v-ripple
-          to="/admin/settings"
+          :to="item.path"
           class="drawer-item"
-          :class="{ active: $route.path === '/admin/settings' }"
         >
           <q-item-section avatar>
-            <q-icon name="settings" />
+            <q-icon :name="item.icon" />
           </q-item-section>
-          <q-item-section>Settings</q-item-section>
+          <q-item-section>
+            <q-item-label>{{ item.label }}</q-item-label>
+            <q-item-label caption>{{ item.time }}</q-item-label>
+          </q-item-section>
         </q-item>
 
         <q-separator class="q-my-md" />
@@ -86,18 +126,105 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { supabase } from 'src/boot/supabase'
+import NotificationComponent from 'components/NotificationComponent.vue'
 
 export default {
   name: 'AdminLayout',
+  components: {
+    NotificationComponent,
+  },
   setup() {
+    const router = useRouter()
+    const route = useRoute()
     const leftDrawerOpen = ref(false)
+    const user = ref(null)
+    const userAvatar = ref('https://cdn-icons-png.flaticon.com/512/149/149071.png')
+    const recentItems = ref([])
+
+    const currentPage = computed(() => {
+      const path = route.path.split('/').pop()
+      return path.charAt(0).toUpperCase() + path.slice(1)
+    })
+
+    const addToRecent = (path, label, icon) => {
+      const newItem = {
+        path,
+        label,
+        icon,
+        time: new Date().toLocaleTimeString(),
+      }
+      recentItems.value = [newItem, ...recentItems.value.slice(0, 4)]
+      localStorage.setItem('recentItems', JSON.stringify(recentItems.value))
+    }
+
+    // Load recent items from localStorage
+    onMounted(() => {
+      const savedRecentItems = localStorage.getItem('recentItems')
+      if (savedRecentItems) {
+        recentItems.value = JSON.parse(savedRecentItems)
+      }
+    })
+
+    // Watch route changes to update recent items
+    watch(
+      () => route.path,
+      (newPath) => {
+        const pathParts = newPath.split('/')
+        const page = pathParts[pathParts.length - 1]
+        if (page && page !== 'dashboard') {
+          addToRecent(newPath, page.charAt(0).toUpperCase() + page.slice(1), 'history')
+        }
+      },
+    )
+
+    const fetchUserAvatar = async (userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('profile_picture')
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        if (error) throw error
+        userAvatar.value = data?.profile_picture || userAvatar.value
+      } catch (error) {
+        console.error('Error fetching avatar:', error)
+      }
+    }
+
+    const fetchUser = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+      if (userData?.user) {
+        user.value = userData.user
+        await fetchUserAvatar(userData.user.id)
+      }
+    }
+
+    const goToProfile = () => router.push('/ProfilePage')
+    const handleLogout = async () => {
+      await supabase.auth.signOut()
+      user.value = null
+      router.push('/SignIn')
+    }
+
+    onMounted(() => {
+      fetchUser()
+    })
 
     return {
       leftDrawerOpen,
+      user,
+      userAvatar,
+      currentPage,
+      recentItems,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value
       },
+      goToProfile,
+      handleLogout,
     }
   },
 }
@@ -185,6 +312,19 @@ $shadow: 0 2px 12px rgba(33, 150, 243, 0.07);
     color: $text-light;
     font-size: 1.5rem;
     transition: color 0.2s;
+  }
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.breadcrumbs {
+  margin: 0 16px;
+  .q-breadcrumbs {
+    font-size: 0.9rem;
   }
 }
 

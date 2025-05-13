@@ -958,7 +958,13 @@ export default {
     // Backend summary stats fetch for all filtered data
     const fetchSummaryStats = async () => {
       try {
-        let query = supabase.from('reports').select(`id, report_type, report_status`)
+        let query = supabase.from('reports').select(`
+          id,
+          report_type,
+          report_status,
+          missing_reports!left(missing_person_name),
+          found_reports!left(found_person_name)
+        `)
 
         if (filters.value.type) {
           query = query.eq('report_type', filters.value.type)
@@ -967,7 +973,7 @@ export default {
           query = query.eq('report_status', filters.value.status)
         }
         if (search.value) {
-          query = query.or(`id.eq.${search.value},reporter_name.ilike.%${search.value}%`)
+          // Do not add any .or() or .filter() here for joined fields!
         }
         if (filters.value.startDate) {
           query = query.gte('created_at', filters.value.startDate + 'T00:00:00')
@@ -979,10 +985,20 @@ export default {
         const { data, error } = await query
         if (error) throw error
 
-        totalReports.value = data.length
-        resolvedReports.value = data.filter((r) => r.report_status === 'resolved').length
-        missingReports.value = data.filter((r) => r.report_type === 'missing').length
-        foundReports.value = data.filter((r) => r.report_type === 'found').length
+        // Filter in JS for search by missing or found person name
+        let filteredData = data
+        if (search.value) {
+          const searchLower = search.value.toLowerCase()
+          filteredData = data.filter((report) => {
+            const missingName = report.missing_reports?.missing_person_name?.toLowerCase() || ''
+            const foundName = report.found_reports?.found_person_name?.toLowerCase() || ''
+            return missingName.includes(searchLower) || foundName.includes(searchLower)
+          })
+        }
+        totalReports.value = filteredData.length
+        resolvedReports.value = filteredData.filter((r) => r.report_status === 'resolved').length
+        missingReports.value = filteredData.filter((r) => r.report_type === 'missing').length
+        foundReports.value = filteredData.filter((r) => r.report_type === 'found').length
       } catch (error) {
         console.error('Error fetching summary stats:', error)
       }
@@ -1035,7 +1051,7 @@ export default {
         }
 
         if (search.value) {
-          query = query.or(`id.eq.${search.value},reporter_name.ilike.%${search.value}%`)
+          // Do not add any .or() or .filter() here for joined fields!
         }
 
         if (filters.value.startDate) {
@@ -1054,8 +1070,17 @@ export default {
 
         if (error) throw error
 
-        // Process the reports
-        reports.value = data.map((report) => ({
+        // After fetching data, filter by missing or found person name in JS
+        let filteredData = data
+        if (search.value) {
+          const searchLower = search.value.toLowerCase()
+          filteredData = data.filter((report) => {
+            const missingName = report.missing_reports?.missing_person_name?.toLowerCase() || ''
+            const foundName = report.found_reports?.found_person_name?.toLowerCase() || ''
+            return missingName.includes(searchLower) || foundName.includes(searchLower)
+          })
+        }
+        reports.value = filteredData.map((report) => ({
           ...report,
           reporter_name: report.user
             ? `${report.user.user_first_name} ${report.user.user_last_name}`

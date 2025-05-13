@@ -32,7 +32,26 @@
         @request="onRequest"
         :rows-per-page-options="[10, 20, 50]"
         class="users-table"
+        @row-click="showUserDetails"
       >
+        <!-- Profile Picture Column -->
+        <template v-slot:body-cell-profile_picture="props">
+          <q-td :props="props">
+            <q-avatar size="40px">
+              <q-img
+                :src="props.row.profile_picture"
+                :ratio="1"
+                spinner-color="primary"
+                spinner-size="24px"
+              >
+                <template v-slot:error>
+                  <q-icon name="person" size="40px" color="grey-5" />
+                </template>
+              </q-img>
+            </q-avatar>
+          </q-td>
+        </template>
+
         <!-- Status Column -->
         <template v-slot:body-cell-status="props">
           <q-td :props="props">
@@ -50,30 +69,9 @@
         <!-- Actions Column -->
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn-group flat>
-              <q-btn
-                flat
-                round
-                color="primary"
-                icon="edit"
-                @click="editUser(props.row)"
-                class="action-btn"
-              >
-                <q-tooltip>Edit User</q-tooltip>
-              </q-btn>
-              <q-btn
-                flat
-                round
-                :color="props.row.is_admin ? 'negative' : 'positive'"
-                :icon="props.row.is_admin ? 'person_off' : 'admin_panel_settings'"
-                @click="toggleAdminStatus(props.row)"
-                class="action-btn"
-              >
-                <q-tooltip>
-                  {{ props.row.is_admin ? 'Remove Admin' : 'Make Admin' }}
-                </q-tooltip>
-              </q-btn>
-            </q-btn-group>
+            <q-btn flat round color="negative" icon="delete" @click="confirmDeleteUser(props.row)">
+              <q-tooltip>Delete User</q-tooltip>
+            </q-btn>
           </q-td>
         </template>
 
@@ -84,52 +82,266 @@
       </q-table>
     </q-card>
 
-    <!-- Edit User Dialog -->
-    <q-dialog v-model="showEditDialog" persistent>
-      <q-card class="edit-dialog">
+    <!-- User Details Dialog -->
+    <q-dialog v-model="showDetailsDialog" persistent>
+      <q-card class="details-dialog">
         <q-card-section class="row items-center">
-          <div class="text-h6">Edit User</div>
+          <div class="text-h6">{{ isEditing ? 'Edit User' : 'User Details' }}</div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
-        <q-card-section>
-          <q-input
-            v-model="editingUser.user_first_name"
-            label="First Name"
-            outlined
-            dense
-            class=""
-          />
-          <q-input v-model="editingUser.user_last_name" label="Last Name" outlined dense class="" />
-          <q-input v-model="editingUser.phone_number" label="Phone Number" outlined dense />
+        <q-card-section class="q-pa-md">
+          <div class="row q-col-gutter-md">
+            <!-- Profile Picture -->
+            <div class="col-12 text-center">
+              <q-avatar size="100px">
+                <q-img
+                  :src="selectedUser.profile_picture"
+                  :ratio="1"
+                  spinner-color="primary"
+                  spinner-size="24px"
+                >
+                  <template v-slot:error>
+                    <q-icon name="person" size="100px" color="grey-5" />
+                  </template>
+                </q-img>
+              </q-avatar>
+            </div>
+
+            <!-- User Information -->
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>First Name</q-item-label>
+                  <template v-if="isEditing">
+                    <q-input
+                      v-model="selectedUser.user_first_name"
+                      label="First Name"
+                      outlined
+                      dense
+                      :rules="[(val) => !!val || 'First name is required']"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-item-label>{{ selectedUser.user_first_name }}</q-item-label>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>Last Name</q-item-label>
+                  <template v-if="isEditing">
+                    <q-input
+                      v-model="selectedUser.user_last_name"
+                      label="Last Name"
+                      outlined
+                      dense
+                      :rules="[(val) => !!val || 'Last name is required']"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-item-label>{{ selectedUser.user_last_name }}</q-item-label>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>National ID</q-item-label>
+                  <template v-if="isEditing">
+                    <q-input
+                      v-model="selectedUser.user_national_id"
+                      label="National ID"
+                      outlined
+                      dense
+                      :rules="[
+                        (val) => !!val || 'National ID is required',
+                        (val) => val.length === 14 || 'National ID must be 14 digits',
+                      ]"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-item-label>{{ selectedUser.user_national_id }}</q-item-label>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>Date of Birth</q-item-label>
+                  <template v-if="isEditing">
+                    <q-input
+                      v-model="selectedUser.user_dob"
+                      label="Date of Birth"
+                      outlined
+                      dense
+                      type="date"
+                      :rules="[(val) => !!val || 'Date of birth is required']"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-item-label>{{
+                      new Date(selectedUser.user_dob).toLocaleDateString()
+                    }}</q-item-label>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>Phone Number</q-item-label>
+                  <template v-if="isEditing">
+                    <q-input
+                      v-model="selectedUser.phone_number"
+                      label="Phone Number"
+                      outlined
+                      dense
+                      :rules="[
+                        (val) => !!val || 'Phone number is required',
+                        (val) => val.length === 11 || 'Phone number must be 11 digits',
+                      ]"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-item-label>{{ selectedUser.phone_number }}</q-item-label>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>Plan</q-item-label>
+                  <template v-if="isEditing">
+                    <q-select
+                      v-model="selectedUser.user_plan"
+                      :options="[
+                        { label: 'Free', value: 1 },
+                        { label: 'Pro', value: 2 },
+                      ]"
+                      outlined
+                      dense
+                      emit-value
+                      map-options
+                    />
+                  </template>
+                  <template v-else>
+                    <q-chip
+                      :color="selectedUser.user_plan === 2 ? 'primary' : 'grey'"
+                      text-color="white"
+                      dense
+                    >
+                      {{ selectedUser.user_plan === 2 ? 'Pro' : 'Free' }}
+                    </q-chip>
+                  </template>
+                </q-item-section>
+              </q-item>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>Status</q-item-label>
+                  <q-item-label>
+                    <q-chip
+                      :color="selectedUser.is_admin ? 'primary' : 'grey'"
+                      text-color="white"
+                      dense
+                    >
+                      {{ selectedUser.is_admin ? 'Admin' : 'User' }}
+                    </q-chip>
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat label="Close" color="primary" v-close-popup />
+          <template v-if="isEditing">
+            <q-btn flat label="Cancel" color="primary" @click="cancelEdit" />
+            <q-btn flat label="Save" color="primary" @click="saveUser" />
+          </template>
+          <template v-else>
+            <q-btn flat label="Edit" color="primary" @click="startEdit" />
+            <q-btn
+              flat
+              :color="selectedUser.is_admin ? 'negative' : 'positive'"
+              :label="selectedUser.is_admin ? 'Remove Admin' : 'Make Admin'"
+              @click="toggleAdminStatus(selectedUser)"
+            />
+            <q-btn
+              flat
+              color="negative"
+              label="Delete User"
+              @click="confirmDeleteUser(selectedUser)"
+            />
+          </template>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <q-dialog v-model="showDeleteDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="warning" color="negative" text-color="white" />
+          <span class="q-ml-sm">Are you sure you want to delete this user?</span>
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" v-close-popup />
-          <q-btn flat label="Save" color="primary" @click="saveUser" />
+          <q-btn flat label="Delete" color="negative" @click="deleteUser" />
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <ToastNotification ref="toast" />
   </q-page>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { supabase } from 'src/boot/supabase'
-import { useQuasar } from 'quasar'
+import ToastNotification from 'components/ToastNotification.vue'
 
 export default {
-  name: 'AdminUsers',
+  name: 'AdminUsersPage',
+  components: {
+    ToastNotification,
+  },
   setup() {
-    const $q = useQuasar()
     const users = ref([])
     const loading = ref(false)
     const search = ref('')
-    const showEditDialog = ref(false)
-    const editingUser = ref({})
+    const showDetailsDialog = ref(false)
+    const selectedUser = ref({})
+    const isEditing = ref(false)
+    const originalUserData = ref(null)
+    const toast = ref(null)
+    const showDeleteDialog = ref(false)
+    const userToDelete = ref(null)
 
     const columns = [
+      {
+        name: 'profile_picture',
+        label: 'Profile',
+        field: 'profile_picture',
+        align: 'center',
+        sortable: false,
+      },
       { name: 'user_id', label: 'ID', field: 'user_id', align: 'left', sortable: true },
       {
         name: 'name',
@@ -139,14 +351,43 @@ export default {
         sortable: true,
       },
       {
+        name: 'national_id',
+        label: 'National ID',
+        field: 'user_national_id',
+        align: 'left',
+        sortable: true,
+      },
+      {
+        name: 'dob',
+        label: 'Date of Birth',
+        field: 'user_dob',
+        align: 'left',
+        sortable: true,
+        format: (val) => new Date(val).toLocaleDateString(),
+      },
+      {
         name: 'phone_number',
         label: 'Phone',
         field: 'phone_number',
         align: 'left',
         sortable: true,
       },
+      {
+        name: 'user_plan',
+        label: 'Plan',
+        field: 'user_plan',
+        align: 'center',
+        sortable: true,
+        format: (val) => (val === 2 ? 'Pro' : 'Free'),
+      },
       { name: 'status', label: 'Status', field: 'is_admin', align: 'center', sortable: true },
-      { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+      {
+        name: 'actions',
+        label: 'Actions',
+        field: 'actions',
+        align: 'center',
+        sortable: false,
+      },
     ]
 
     const pagination = ref({
@@ -157,13 +398,10 @@ export default {
       rowsNumber: 0,
     })
 
-    const showNotification = (message, type = 'negative') => {
-      $q.notify({
-        type: type,
-        message: message,
-        position: 'top',
-        timeout: 2000,
-      })
+    const showNotification = (message, type = 'error') => {
+      if (toast.value) {
+        toast.value.showToast(message, type)
+      }
     }
 
     const fetchUsers = async () => {
@@ -227,9 +465,20 @@ export default {
       fetchUsers()
     }
 
-    const editUser = (user) => {
-      editingUser.value = { ...user }
-      showEditDialog.value = true
+    const showUserDetails = (evt, row) => {
+      selectedUser.value = { ...row }
+      showDetailsDialog.value = true
+      isEditing.value = false
+    }
+
+    const startEdit = () => {
+      originalUserData.value = { ...selectedUser.value }
+      isEditing.value = true
+    }
+
+    const cancelEdit = () => {
+      selectedUser.value = { ...originalUserData.value }
+      isEditing.value = false
     }
 
     const saveUser = async () => {
@@ -237,17 +486,25 @@ export default {
         const { error } = await supabase
           .from('users')
           .update({
-            user_first_name: editingUser.value.user_first_name,
-            user_last_name: editingUser.value.user_last_name,
-            phone_number: editingUser.value.phone_number,
+            user_first_name: selectedUser.value.user_first_name,
+            user_last_name: selectedUser.value.user_last_name,
+            user_national_id: selectedUser.value.user_national_id,
+            user_dob: selectedUser.value.user_dob,
+            phone_number: selectedUser.value.phone_number,
+            user_plan: selectedUser.value.user_plan,
           })
-          .eq('user_id', editingUser.value.user_id)
+          .eq('user_id', selectedUser.value.user_id)
 
         if (error) throw error
 
-        showNotification('User updated successfully', 'positive')
-        showEditDialog.value = false
-        fetchUsers()
+        // Update the user in the local users array
+        const userIndex = users.value.findIndex((u) => u.user_id === selectedUser.value.user_id)
+        if (userIndex !== -1) {
+          users.value[userIndex] = { ...users.value[userIndex], ...selectedUser.value }
+        }
+
+        showNotification('User updated successfully', 'success')
+        isEditing.value = false
       } catch (error) {
         console.error('Error updating user:', error)
         showNotification('Failed to update user')
@@ -256,6 +513,8 @@ export default {
 
     const toggleAdminStatus = async (user) => {
       try {
+        const newAdminStatus = !user.is_admin
+
         if (user.is_admin) {
           // Remove from admins table
           const { error } = await supabase.from('admins').delete().eq('user_id', user.user_id)
@@ -268,11 +527,66 @@ export default {
           if (error) throw error
         }
 
-        showNotification(`User ${user.is_admin ? 'removed from' : 'added to'} admins`, 'positive')
-        fetchUsers()
+        // Update the user in the local users array
+        const userIndex = users.value.findIndex((u) => u.user_id === user.user_id)
+        if (userIndex !== -1) {
+          users.value[userIndex] = {
+            ...users.value[userIndex],
+            is_admin: newAdminStatus,
+          }
+          // Also update the selected user if it's the same user
+          if (selectedUser.value.user_id === user.user_id) {
+            selectedUser.value.is_admin = newAdminStatus
+          }
+        }
+
+        showNotification(`User ${newAdminStatus ? 'added to' : 'removed from'} admins`, 'success')
       } catch (error) {
         console.error('Error toggling admin status:', error)
         showNotification('Failed to update admin status')
+      }
+    }
+
+    const confirmDeleteUser = (user) => {
+      userToDelete.value = user
+      showDeleteDialog.value = true
+    }
+
+    const deleteUser = async () => {
+      try {
+        // First remove from admins table if they are an admin
+        if (userToDelete.value.is_admin) {
+          const { error: adminError } = await supabase
+            .from('admins')
+            .delete()
+            .eq('user_id', userToDelete.value.user_id)
+
+          if (adminError) throw adminError
+        }
+
+        // Then delete from users table
+        const { error: userError } = await supabase
+          .from('users')
+          .delete()
+          .eq('user_id', userToDelete.value.user_id)
+
+        if (userError) throw userError
+
+        // Remove from local users array
+        users.value = users.value.filter((u) => u.user_id !== userToDelete.value.user_id)
+
+        // Close dialogs
+        showDeleteDialog.value = false
+        if (showDetailsDialog.value) {
+          showDetailsDialog.value = false
+        }
+
+        showNotification('User deleted successfully', 'success')
+      } catch (error) {
+        console.error('Error deleting user:', error)
+        showNotification('Failed to delete user')
+      } finally {
+        userToDelete.value = null
       }
     }
 
@@ -286,13 +600,21 @@ export default {
       loading,
       pagination,
       search,
-      showEditDialog,
-      editingUser,
+      showDetailsDialog,
+      selectedUser,
+      isEditing,
+      toast,
       onRequest,
       onSearch,
-      editUser,
       saveUser,
       toggleAdminStatus,
+      showUserDetails,
+      startEdit,
+      cancelEdit,
+      showDeleteDialog,
+      userToDelete,
+      confirmDeleteUser,
+      deleteUser,
     }
   },
 }
@@ -451,6 +773,36 @@ $shadow: 0 2px 12px rgba(33, 150, 243, 0.07);
   }
 }
 
+.details-dialog {
+  min-width: 600px;
+  max-width: 800px;
+  background: $card-bg;
+  color: $text;
+  border-radius: 18px;
+  box-shadow: $shadow;
+
+  .q-card-section {
+    padding: 24px;
+    background: $main-bg;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .q-item {
+    padding: 8px 16px;
+    background: $card-bg;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .q-item-label {
+    font-size: 1rem;
+    &--caption {
+      color: $text-light;
+      font-size: 0.9rem;
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 900px) {
   .users-table-card {
@@ -467,6 +819,11 @@ $shadow: 0 2px 12px rgba(33, 150, 243, 0.07);
   }
   .search-input {
     font-size: 0.95em;
+  }
+  .details-dialog {
+    min-width: 100%;
+    margin: 0;
+    border-radius: 0;
   }
 }
 </style>

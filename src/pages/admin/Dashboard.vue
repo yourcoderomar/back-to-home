@@ -271,7 +271,7 @@ export default {
             legend: {
               position: 'bottom',
               labels: {
-                color: '#F9F9F9',
+                color: '#222',
                 font: {
                   size: 12,
                 },
@@ -305,7 +305,7 @@ export default {
             legend: {
               position: 'bottom',
               labels: {
-                color: '#F9F9F9',
+                color: '#222',
                 font: {
                   size: 12,
                 },
