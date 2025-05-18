@@ -1,5 +1,6 @@
 <template>
   <q-page padding class="admin-reports">
+    <ToastNotification ref="toast" />
     <div class="row items-center">
       <div class="text-h4 dashboard-title col">Report Management</div>
       <q-btn color="primary" class="create-btn" label="Add Report" @click="showAddDialog = true" />
@@ -783,13 +784,16 @@
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from 'src/boot/supabase'
-import { useQuasar } from 'quasar'
 import { debounce } from 'quasar'
+import ToastNotification from 'src/components/ToastNotification.vue'
 
 export default {
   name: 'AdminReports',
+  components: {
+    ToastNotification,
+  },
   setup() {
-    const $q = useQuasar()
+    const toast = ref(null)
     const reports = ref([])
     const loading = ref(false)
     const searchInput = ref('')
@@ -1118,10 +1122,7 @@ export default {
         pagination.value.rowsNumber = count
       } catch (error) {
         console.error('Error fetching reports:', error)
-        $q.notify({
-          color: 'negative',
-          message: 'Failed to fetch reports',
-        })
+        toast.value.showToast('Failed to fetch reports', 'error')
       } finally {
         loading.value = false
       }
@@ -1167,17 +1168,11 @@ export default {
 
         if (error) throw error
 
-        $q.notify({
-          color: 'positive',
-          message: `Report ${newStatus} successfully`,
-        })
+        toast.value.showToast(`Report ${newStatus} successfully`, 'success')
         fetchReports()
       } catch (error) {
         console.error('Error updating report status:', error)
-        $q.notify({
-          color: 'negative',
-          message: 'Failed to update report status',
-        })
+        toast.value.showToast('Failed to update report status', 'error')
       }
     }
 
@@ -1187,17 +1182,11 @@ export default {
 
         if (error) throw error
 
-        $q.notify({
-          color: 'positive',
-          message: 'Report deleted successfully',
-        })
+        toast.value.showToast('Report deleted successfully', 'success')
         fetchReports()
       } catch (error) {
         console.error('Error deleting report:', error)
-        $q.notify({
-          color: 'negative',
-          message: 'Failed to delete report',
-        })
+        toast.value.showToast('Failed to delete report', 'error')
       }
     }
 
@@ -1237,7 +1226,6 @@ export default {
           .from('reports')
           .insert([baseReport])
           .select()
-          .single()
         if (reportError) throw reportError
         // Insert into subtype table
         if (addForm.value.report_type === 'missing') {
@@ -1267,12 +1255,12 @@ export default {
             },
           ])
         }
-        $q.notify({ type: 'positive', message: 'Report added successfully!' })
+        toast.value.showToast('Report added successfully!', 'success')
         showAddDialog.value = false
         resetAddForm()
         fetchReports()
       } catch (error) {
-        $q.notify({ type: 'negative', message: error.message || 'Failed to add report' })
+        toast.value.showToast(error.message || 'Failed to add report', 'error')
       } finally {
         addLoading.value = false
       }
@@ -1379,17 +1367,17 @@ export default {
               description: editForm.value.description,
               photo_url: editForm.value.photo_url,
             })
-            .eq('report_id', editForm.value.id)
+            .eq('found_report_id', editForm.value.id)
 
           if (foundError) throw foundError
         }
 
-        $q.notify({ type: 'positive', message: 'Report updated successfully!' })
+        toast.value.showToast('Report updated successfully!', 'success')
         showEditDialog.value = false
         resetEditForm()
         fetchReports()
       } catch (error) {
-        $q.notify({ type: 'negative', message: error.message || 'Failed to update report' })
+        toast.value.showToast(error.message || 'Failed to update report', 'error')
       } finally {
         editLoading.value = false
       }
@@ -1402,6 +1390,10 @@ export default {
       editMode.value = true
       // Deep copy selectedReport to viewEditForm
       viewEditForm.value = JSON.parse(JSON.stringify(selectedReport.value))
+      // Store the found_report_id if it exists
+      if (selectedReport.value.found_reports) {
+        viewEditForm.value.found_report_id = selectedReport.value.found_reports.id
+      }
     }
     const cancelEditInView = () => {
       editMode.value = false
@@ -1421,7 +1413,9 @@ export default {
           .from('reports')
           .update(baseReport)
           .eq('id', viewEditForm.value.id)
+          .select()
         if (reportError) throw reportError
+
         // Update subtype table
         if (viewEditForm.value.report_type === 'missing') {
           const { error: missingError } = await supabase
@@ -1438,27 +1432,40 @@ export default {
             .eq('report_id', viewEditForm.value.id)
           if (missingError) throw missingError
         } else if (viewEditForm.value.report_type === 'found') {
+          // Create update data matching the exact structure from the database
+          const updateData = {
+            found_person_name: viewEditForm.value.person_name,
+            age_estimate: parseInt(viewEditForm.value.age),
+            gender: viewEditForm.value.gender,
+            found_location: viewEditForm.value.location,
+            found_date: viewEditForm.value.date,
+            description: viewEditForm.value.description,
+            photo_url: viewEditForm.value.photo_url,
+          }
+
+          // Use direct update with admin access
           const { error: foundError } = await supabase
             .from('found_reports')
-            .update({
-              found_person_name: viewEditForm.value.person_name,
-              age_estimate: viewEditForm.value.age,
-              gender: viewEditForm.value.gender,
-              found_location: viewEditForm.value.location,
-              found_date: viewEditForm.value.date,
-              description: viewEditForm.value.description,
-              photo_url: viewEditForm.value.photo_url,
-            })
-            .eq('report_id', viewEditForm.value.id)
+            .update(updateData)
+            .eq('found_report_id', viewEditForm.value.id)
+            .select()
+
           if (foundError) throw foundError
         }
-        $q.notify({ type: 'positive', message: 'Report updated successfully!' })
+
+        toast.value.showToast('Report updated successfully!', 'success')
         editMode.value = false
-        fetchReports()
-        // Update selectedReport to reflect changes
-        selectedReport.value = { ...viewEditForm.value }
+
+        // Fetch fresh data after update
+        await fetchReports()
+
+        // Update selectedReport with fresh data
+        const updatedReport = reports.value.find((r) => r.id === viewEditForm.value.id)
+        if (updatedReport) {
+          selectedReport.value = updatedReport
+        }
       } catch (error) {
-        $q.notify({ type: 'negative', message: error.message || 'Failed to update report' })
+        toast.value.showToast(error.message || 'Failed to update report', 'error')
       }
     }
 
@@ -1483,6 +1490,7 @@ export default {
     )
 
     return {
+      toast,
       reports,
       columns,
       loading,

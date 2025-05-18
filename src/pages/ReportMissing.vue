@@ -141,7 +141,7 @@ export default {
           name: 'gender',
           label: 'Gender',
           type: 'select',
-          options: ['male', 'memale'],
+          options: ['male', 'female'],
           width: '40%',
           rules: [(val) => !!val || 'Gender is required'],
         },
