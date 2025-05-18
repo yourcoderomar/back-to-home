@@ -3,11 +3,11 @@
     <ul class="burger-menu">
       <li>
         <div class="search-container">
-          <q-input 
-            v-model="searchQuery" 
-            class="search-box" 
-            placeholder="Search..." 
-            dense 
+          <q-input
+            v-model="searchQuery"
+            class="search-box"
+            placeholder="Search..."
+            dense
             standout
             @update:model-value="handleSearch"
           >
@@ -18,44 +18,38 @@
           <!-- Search Results Dropdown -->
           <div v-show="searchQuery" class="search-dropdown">
             <ul v-if="filteredPages.length > 0">
-              <li 
-                v-for="page in filteredPages" 
-                :key="page.path"
-                @click="navigateToPage(page.path)"
-              >
+              <li v-for="page in filteredPages" :key="page.path" @click="navigateToPage(page.path)">
                 <q-icon :name="page.icon" class="page-icon" />
                 {{ page.name }}
               </li>
             </ul>
-            <div v-else class="no-results">
-              No results found
-            </div>
+            <div v-else class="no-results">No results found</div>
           </div>
         </div>
       </li>
       <ul class="burger-menu">
         <li><router-link to="/ReportMissing">Report a Missing Person</router-link></li>
         <li><router-link to="/SearchMissing">Search for a Missing Person</router-link></li>
-        <li><router-link to="/SearchMissing">Search for a Missing Person</router-link></li>
+        <li><router-link to="/SearchReports">Search Reports</router-link></li>
 
         <li>
-          <router-link to="/donation">Donate</router-link></li>
+          <router-link to="/donation">Donate</router-link>
+        </li>
         <li><router-link to="/OurPlans">Our Plans</router-link></li>
         <li><router-link to="/AboutUs">About Us</router-link></li>
         <li><router-link to="/Contact">Contact Us</router-link></li>
       </ul>
-
     </ul>
   </div>
 </template>
 
 <script>
 export default {
-  name: "BurgerMenu",
+  name: 'BurgerMenu',
   data() {
     return {
       isVisible: false,
-      searchQuery: "",
+      searchQuery: '',
       filteredPages: [],
       availablePages: [
         { name: 'About Us', path: '/AboutUs', icon: 'info' },
@@ -66,33 +60,33 @@ export default {
         { name: 'Donate', path: '/donate', icon: 'monetization_on' },
         { name: 'Profile', path: '/ProfilePage', icon: 'person' },
         { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
-        { name: 'Security', path: '/Security', icon: 'security' }
-      ]
-    };
+        { name: 'Security', path: '/Security', icon: 'security' },
+      ],
+    }
   },
   methods: {
     toggleMenu() {
-      this.isVisible = !this.isVisible;
+      this.isVisible = !this.isVisible
     },
     handleSearch(value) {
       if (!value?.trim()) {
-        this.filteredPages = [];
-        return;
+        this.filteredPages = []
+        return
       }
 
-      const query = value.toLowerCase();
-      this.filteredPages = this.availablePages.filter(page => 
-        page.name.toLowerCase().includes(query) || 
-        page.path.toLowerCase().includes(query)
-      );
+      const query = value.toLowerCase()
+      this.filteredPages = this.availablePages.filter(
+        (page) =>
+          page.name.toLowerCase().includes(query) || page.path.toLowerCase().includes(query),
+      )
     },
     navigateToPage(path) {
-      this.$router.push(path);
-      this.searchQuery = '';
-      this.isVisible = false;
-    }
+      this.$router.push(path)
+      this.searchQuery = ''
+      this.isVisible = false
+    },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>
@@ -199,5 +193,4 @@ export default {
     }
   }
 }
-
 </style>
