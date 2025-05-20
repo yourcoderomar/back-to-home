@@ -55,6 +55,7 @@
             :initialValues="formValues"
             :link-text="'Already filled a report?'"
             :link-to="'/'"
+            :loading="isLoading"
             @formSubmitted="handleFormSubmission"
             @closeForm="showForm = false"
             class="form"
@@ -87,11 +88,11 @@ export default {
   data() {
     return {
       showForm: false,
+      isLoading: false,
       formValues: {
         report_type: 'missing', // Auto-set
         reporter_name: '',
         reporter_contact: '',
-        reporter_status: '',
         user_id: '',
         missing_person_name: '',
         age: '',
@@ -99,7 +100,7 @@ export default {
         last_seen_location: '',
         last_seen_date: '',
         description: '',
-        photo_url: null, // Changed from report_image to photo_url
+        photo_url: null,
         created_at: new Date().toISOString(),
       },
       fields: [
@@ -118,13 +119,6 @@ export default {
           required: true,
           width: '100%',
           rules: [(val) => !!val || 'Contact is required'],
-        },
-        {
-          name: 'reporter_status',
-          label: 'Your Status',
-          type: 'text',
-          width: '100%',
-          rules: [(val) => !!val || 'Status is required'],
         },
         {
           name: 'missing_person_name',
@@ -197,12 +191,12 @@ export default {
   methods: {
     async handleFormSubmission(formData) {
       try {
+        this.isLoading = true
         let imageUrl = null
         console.log('📌 Form Data Received:', formData)
 
         // ✅ Handle Image Upload to Supabase Storage
         if (formData.photo_url) {
-          // Changed from report_image to photo_url
           const file = formData.photo_url
           console.log('📤 File to upload:', file)
 
@@ -210,6 +204,7 @@ export default {
           if (!(file instanceof File)) {
             console.error('❌ Invalid file object:', file)
             this.$refs.toast.showToast('Invalid image file. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -220,15 +215,12 @@ export default {
 
           const { error: uploadError } = await supabase.storage
             .from('missingimages')
-            .upload(fileName, file, {
-              cacheControl: '3600',
-              upsert: false,
-              contentType: file.type,
-            })
+            .upload(fileName, file)
 
           if (uploadError) {
             console.error('❌ File upload error:', uploadError.message)
             this.$refs.toast.showToast('Failed to upload image. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -240,6 +232,7 @@ export default {
           if (!publicUrl) {
             console.error('❌ Error retrieving image URL.')
             this.$refs.toast.showToast('Failed to process image. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -249,10 +242,10 @@ export default {
 
         // ✅ Step 1: Insert into `reports` (Supertype Table)
         const reportDataToInsert = {
-          report_type: formData.report_type, // Always "missing"
+          report_type: formData.report_type,
           reporter_name: formData.reporter_name,
           reporter_contact: formData.reporter_contact,
-          report_status: formData.reporter_status,
+          report_status: 'open',
           user_id: formData.user_id,
           created_at: formData.created_at,
         }
@@ -267,12 +260,13 @@ export default {
         if (reportInsertError) {
           console.error("❌ Error inserting into 'reports':", reportInsertError.message)
           this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+          this.isLoading = false
           return
         }
 
         // ✅ Step 2: Insert into `missing_reports` (Subtype Table)
         const missingReportData = {
-          missing_report_id: insertedReport[0].id, // Use the auto-generated ID from reports table
+          missing_report_id: insertedReport[0].id,
           missing_person_name: formData.missing_person_name,
           age: formData.age,
           gender: formData.gender,
@@ -294,15 +288,17 @@ export default {
             missingReportInsertError.message,
           )
           this.$refs.toast.showToast('Failed to submit report details. Please try again.', 'error')
+          this.isLoading = false
           return
         }
 
-        console.log('✅ Report submitted successfully!')
         this.$refs.toast.showToast('Report submitted successfully!', 'success')
         this.showForm = false // Close form after submission
-      } catch (err) {
-        console.error('❌ Unexpected error:', err)
-        this.$refs.toast.showToast('An unexpected error occurred. Please try again.', 'error')
+      } catch (error) {
+        console.error('Error submitting report:', error)
+        this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+      } finally {
+        this.isLoading = false
       }
     },
   },

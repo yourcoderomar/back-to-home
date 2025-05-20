@@ -2,14 +2,7 @@
   <q-page-container>
     <q-form class="form" @submit.prevent="handleSubmit">
       <!-- Exit Button -->
-      <q-btn 
-        dense 
-        flat 
-        icon="close" 
-        color="red" 
-        class="exit-btn" 
-        @click="$emit('closeForm')" 
-      />
+      <q-btn dense flat icon="close" color="red" class="exit-btn" @click="$emit('closeForm')" />
 
       <p class="title">{{ title }}</p>
       <p class="message">{{ message }}</p>
@@ -17,9 +10,12 @@
       <div class="flex-container">
         <template v-for="(field, index) in fields" :key="index">
           <!-- Break for Full Width Fields -->
-          <div v-if="index > 0 && fields[index - 1].width === '100%'" class="full-width-break"></div>
+          <div
+            v-if="index > 0 && fields[index - 1].width === '100%'"
+            class="full-width-break"
+          ></div>
 
-          <div 
+          <div
             class="input-container"
             :data-full-width="field.width === '100%'"
             :style="{ flex: `0 0 ${field.width || 'auto'}` }"
@@ -37,8 +33,8 @@
               hide-bottom-space
             />
 
-                        <!-- File Upload -->
-                        <q-file
+            <!-- File Upload -->
+            <q-file
               v-else-if="field.type === 'file'"
               v-model="formData[field.name]"
               :label="field.label"
@@ -91,11 +87,7 @@
 
             <!-- Checkbox -->
             <div v-else-if="field.type === 'checkbox'" class="checkbox-group">
-              <q-checkbox
-                v-model="formData[field.name]"
-                :label="field.label"
-                dense
-              />
+              <q-checkbox v-model="formData[field.name]" :label="field.label" dense />
               <div v-if="!formData[field.name] && showValidation" class="error-text">
                 {{ field.label }} must be checked.
               </div>
@@ -104,55 +96,55 @@
         </template>
       </div>
 
-      <q-btn label="Submit" type="submit" class="submit" />
+      <q-btn label="Submit" type="submit" class="submit" :loading="loading" :disable="loading" />
     </q-form>
   </q-page-container>
 </template>
 
 <script>
 export default {
-  name: "ReusableForm",
+  name: 'ReusableForm',
   props: {
-    title: { type: String, default: "Register" },
-    message: { type: String, default: "Signup now and get full access to our app." },
+    title: { type: String, default: 'Register' },
+    message: { type: String, default: 'Signup now and get full access to our app.' },
     fields: { type: Array, default: () => [] },
-    initialValues: { type: Object, default: () => ({}) }
+    initialValues: { type: Object, default: () => ({}) },
+    loading: { type: Boolean, default: false },
   },
   data() {
     return {
       formData: { ...this.initialValues },
-      showValidation: false
-    };
+      showValidation: false,
+    }
   },
   methods: {
-  handleSubmit() {
-    this.showValidation = true; // Show validation errors
+    handleSubmit() {
+      this.showValidation = true // Show validation errors
 
-    const invalidFields = this.fields.some(field => {
-      if (field.required && !this.formData[field.name]) {
-        return true;
+      const invalidFields = this.fields.some((field) => {
+        if (field.required && !this.formData[field.name]) {
+          return true
+        }
+        return false
+      })
+
+      if (invalidFields) {
+        return // Stop submission if validation fails
       }
-      return false;
-    });
 
-    if (invalidFields) {
-      return; // Stop submission if validation fails
-    }
+      // Check if there's a file field and convert it to a File object
+      let formDataWithFile = { ...this.formData }
 
-    // Check if there's a file field and convert it to a File object
-    let formDataWithFile = { ...this.formData };
+      this.fields.forEach((field) => {
+        if (field.type === 'file' && this.formData[field.name]) {
+          formDataWithFile[field.name] = this.formData[field.name] // Ensures the actual File object is passed
+        }
+      })
 
-    this.fields.forEach(field => {
-      if (field.type === 'file' && this.formData[field.name]) {
-        formDataWithFile[field.name] = this.formData[field.name]; // Ensures the actual File object is passed
-      }
-    });
-
-    this.$emit("formSubmitted", formDataWithFile);
-  }
+      this.$emit('formSubmitted', formDataWithFile)
+    },
+  },
 }
-
-};
 </script>
 
 <style scoped>
@@ -170,7 +162,7 @@ export default {
   box-sizing: border-box;
 }
 
-.input-container[data-full-width="true"] {
+.input-container[data-full-width='true'] {
   flex-basis: 100%;
 }
 
@@ -181,7 +173,8 @@ export default {
 }
 
 /* Checkbox & Radio Button Groups */
-.radio-group, .checkbox-group {
+.radio-group,
+.checkbox-group {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -219,7 +212,7 @@ export default {
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: #2C3539;
+  color: #2c3539;
   text-align: center;
 }
 
@@ -236,5 +229,9 @@ export default {
   color: #fff;
   font-size: 16px;
   background-color: #00bfff;
+}
+
+.submit .q-spinner {
+  color: white;
 }
 </style>

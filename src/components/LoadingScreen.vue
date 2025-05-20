@@ -3,14 +3,21 @@
     <!-- Loading Screen (Visible Until Page Loads) -->
     <div class="loading" v-if="isLoading">
       <svg width="64px" height="48px">
-        <polyline points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24" id="back"></polyline>
-        <polyline points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24" id="front"></polyline>
+        <polyline
+          points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24"
+          id="back"
+        ></polyline>
+        <polyline
+          points="0.157 23.954, 14 23.954, 21.843 48, 43 0, 50 24, 64 24"
+          id="front"
+        ></polyline>
       </svg>
     </div>
 
     <!-- Main Content (Appears Only After Loading) -->
     <div v-if="!isLoading" class="animated-content">
-      <slot></slot> <!-- Your page content goes here -->
+      <slot></slot>
+      <!-- Your page content goes here -->
     </div>
   </div>
 </template>
@@ -20,25 +27,25 @@ export default {
   data() {
     return {
       isLoading: Boolean,
-    };
+    }
   },
   mounted() {
     // Disable scrolling while loading
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden'
 
     // Hide loading animation when the page finishes loading
     const hideLoading = () => {
-      this.isLoading = false;
-      document.body.style.overflow = ""; // Re-enable scrolling
-    };
+      this.isLoading = false
+      document.body.style.overflow = '' // Re-enable scrolling
+    }
 
     // Event listener for full page load
-    window.addEventListener("load", hideLoading);
+    window.addEventListener('load', hideLoading)
 
     // Fallback timeout (max wait time: 3 seconds)
-    setTimeout(hideLoading, 3000);
-  }
-};
+    setTimeout(hideLoading, 3000)
+  },
+}
 </script>
 
 <style scoped>
@@ -68,7 +75,7 @@ export default {
 }
 
 .loading svg polyline#front {
-  stroke: #2C3539;
+  stroke: #2c3539;
   stroke-dasharray: 48, 144;
   stroke-dashoffset: 192;
   animation: dash_682 1.4s linear infinite;

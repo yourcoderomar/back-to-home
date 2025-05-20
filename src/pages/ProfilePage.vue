@@ -56,7 +56,7 @@
                   rounded
                   class="upgrade-btn"
                   label="Upgrade Plan"
-                  @click="router.push('/MyPlan')"
+                  @click="router.push('/OurPlans')"
                 />
                 <q-btn
                   v-if="userPlan.plan_name === 'pro'"
@@ -124,12 +124,64 @@
                   <BarChart :chartData="reportTypesData" />
                 </div>
               </div>
+
+              <!-- Statistics Cards -->
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <q-icon name="description" size="2em" color="primary" />
+                  <div class="stat-content">
+                    <h4>Total Reports</h4>
+                    <p class="stat-value">{{ totalReports }}</p>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <q-icon name="schedule" size="2em" color="warning" />
+                  <div class="stat-content">
+                    <h4>Avg. Response Time</h4>
+                    <p class="stat-value">{{ avgResponseTime }}h</p>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <q-icon name="check_circle" size="2em" color="positive" />
+                  <div class="stat-content">
+                    <h4>Success Rate</h4>
+                    <p class="stat-value">{{ successRate }}%</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <FooterComponent />
+    <q-dialog v-model="showConfirmDialog" persistent class="delete-dialog">
+      <q-card class="delete-card">
+        <q-card-section class="row items-center q-pa-lg">
+          <q-avatar icon="warning" color="negative" text-color="white" size="40px" />
+          <span class="q-ml-md text-h6">Delete Subscription</span>
+        </q-card-section>
+
+        <q-card-section class="q-px-lg q-pb-lg">
+          <p class="dialog-message">
+            Are you sure you want to delete your subscription? You will be moved to the free plan
+            and lose access to premium features.
+          </p>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-lg">
+          <q-btn flat label="Cancel" color="grey-7" class="cancel-btn q-mr-sm" v-close-popup />
+          <q-btn
+            unelevated
+            label="Delete Subscription"
+            color="negative"
+            class="delete-btn"
+            v-close-popup
+            @click="confirmDelete"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page-container>
 </template>
 
@@ -163,6 +215,7 @@ export default {
       plan_role: 'free_user',
       plan_id: 1,
     })
+    const showConfirmDialog = ref(false)
 
     // Chart data
     const reportsData = ref({
@@ -197,6 +250,11 @@ export default {
         },
       ],
     })
+
+    // Add new refs for dashboard data
+    const totalReports = ref(0)
+    const avgResponseTime = ref(0)
+    const successRate = ref(0)
 
     const fetchUser = async () => {
       try {
@@ -308,6 +366,26 @@ export default {
             ],
           }
           console.log('Updated reportTypesData:', JSON.stringify(reportTypesData.value))
+
+          // Calculate additional statistics
+          totalReports.value = reports.length
+
+          // Calculate average response time
+          const resolvedReports = reports.filter((r) => r.report_status === 'resolved')
+          if (resolvedReports.length > 0) {
+            const totalResponseTime = resolvedReports.reduce((acc, report) => {
+              const created = new Date(report.created_at)
+              const resolved = new Date(report.resolved_at)
+              return acc + (resolved - created) / (1000 * 60 * 60) // Convert to hours
+            }, 0)
+            avgResponseTime.value = Math.round(totalResponseTime / resolvedReports.length)
+          }
+
+          // Calculate success rate
+          const successfulReports = reports.filter(
+            (r) => r.report_status === 'resolved' && r.report_outcome === 'successful',
+          )
+          successRate.value = Math.round((successfulReports.length / reports.length) * 100)
         }
       } catch (err) {
         console.error('Error fetching user data:', err)
@@ -319,7 +397,11 @@ export default {
       router.push('/SignIn')
     }
 
-    const deleteSubscription = async () => {
+    const deleteSubscription = () => {
+      showConfirmDialog.value = true
+    }
+
+    const confirmDelete = async () => {
       try {
         const { data: authUser, error: authError } = await supabase.auth.getUser()
         if (authError || !authUser?.user) {
@@ -351,9 +433,14 @@ export default {
       router,
       logout,
       deleteSubscription,
+      confirmDelete,
+      showConfirmDialog,
       reportsData,
       activityData,
       reportTypesData,
+      totalReports,
+      avgResponseTime,
+      successRate,
     }
   },
 }
@@ -559,6 +646,40 @@ export default {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-content h4 {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.stat-value {
+  margin: 5px 0 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
 @media (max-width: 1024px) {
   .main-grid {
     grid-template-columns: 1fr;
@@ -603,6 +724,56 @@ export default {
     flex-direction: column;
     gap: 15px;
     text-align: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Delete Dialog Styles */
+.delete-dialog :deep(.q-dialog__backdrop) {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.delete-card {
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  background: white;
+}
+
+.dialog-message {
+  color: #666;
+  font-size: 1.1em;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cancel-btn {
+  font-weight: 600;
+  padding: 8px 20px;
+}
+
+.delete-btn {
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #ff4444, #cc0000);
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+}
+
+@media (max-width: 600px) {
+  .delete-card {
+    margin: 20px;
+  }
+
+  .dialog-message {
+    font-size: 1em;
   }
 }
 </style>

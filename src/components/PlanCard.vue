@@ -22,7 +22,13 @@
     </div>
 
     <div class="card-footer">
-      <button @click="learnMore" class="card-button">Get started</button>
+      <button v-if="showGetStarted" @click="learnMore" class="card-button" :disabled="loading">
+        <q-spinner v-if="loading" color="currentColor" size="1.5em" class="q-mr-sm" />
+        {{ title.toLowerCase() === 'starter' ? 'Change Plan' : 'Get Started' }}
+      </button>
+      <button v-else class="card-button current-plan">
+        {{ title.toLowerCase() === 'starter' ? 'Current Plan' : 'Current Plan' }}
+      </button>
     </div>
   </div>
 </template>
@@ -33,27 +39,39 @@ export default {
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     subtitle: {
       type: String,
-      required: true
+      required: true,
     },
     price: {
       type: Number,
-      required: true
+      required: true,
     },
     features: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
+    showGetStarted: {
+      type: Boolean,
+      default: true,
+    },
+    isCurrentPlan: {
+      type: Boolean,
+      default: false,
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
   },
   methods: {
     learnMore() {
-      this.$emit('learn-more');
-    }
-  }
-};
+      this.$emit('learn-more')
+    },
+  },
+}
 </script>
 
 <style scoped>
@@ -62,21 +80,31 @@ export default {
   flex-direction: column;
   background-color: #49596b;
   border-radius: 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   animation: fadeIn 0.5s ease;
   margin: 20px;
 }
 
 .card-container:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.2), 0 4px 8px -2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 8px 12px -1px rgba(0, 0, 0, 0.2),
+    0 4px 8px -2px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .card-content {
@@ -148,12 +176,33 @@ export default {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.card-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .card-button:hover {
-  background-color: #49596B;
+  background-color: #49596b;
   color: #f2f0e9;
   border-color: #f2f0e9;
+}
+
+.card-button.current-plan {
+  background-color: #49596b;
+  color: #f2f0e9;
+  cursor: default;
+}
+
+.card-button.current-plan:hover {
+  background-color: #49596b;
+  color: #f2f0e9;
+  transform: none;
+  box-shadow: none;
 }
 </style>

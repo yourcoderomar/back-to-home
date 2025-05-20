@@ -1,99 +1,128 @@
 <template>
-  <header :class="{ navbar: true, 'transparent-nav': isTransparent }">
-    <!-- Logo -->
-    <router-link to="/" class="logo-link">
-      <img src="/images/logo.png" alt="Logo" class="logo" />
-    </router-link>
+  <div class="navbar-wrapper">
+    <header :class="['navbar', { 'transparent-nav': isTransparent }, navbarClass]">
+      <!-- Logo -->
+      <router-link to="/" class="logo-link">
+        <img src="/images/logo.png" alt="Logo" class="logo" />
+      </router-link>
 
-    <!-- Navigation Buttons -->
-    <nav class="nav-buttons">
-      <div class="show-on-desktop">
-        <div class="search-container">
-          <q-icon name="search" class="search-icon" />
-          <q-input
-            v-model="searchQuery"
-            class="search-box"
-            placeholder="Search..."
-            dense
-            standout
-            @update:model-value="handleSearch"
-          />
-          <!-- Search Results Dropdown -->
-          <div v-show="searchQuery" class="search-dropdown">
-            <ul v-if="filteredPages.length > 0">
-              <li v-for="page in filteredPages" :key="page.path" @click="navigateToPage(page.path)">
-                <q-icon :name="page.icon" class="page-icon" />
-                {{ page.name }}
-              </li>
-            </ul>
-            <div v-else class="no-results">No results found</div>
+      <!-- Navigation Buttons -->
+      <nav class="nav-buttons">
+        <div class="show-on-desktop">
+          <div class="search-container">
+            <q-icon name="search" class="search-icon" />
+            <q-input
+              v-model="searchQuery"
+              class="search-box"
+              placeholder="Search..."
+              dense
+              standout
+              @update:model-value="handleSearch"
+            />
+            <!-- Search Results Dropdown -->
+            <div v-show="searchQuery" class="search-dropdown">
+              <ul v-if="filteredPages.length > 0">
+                <li
+                  v-for="page in filteredPages"
+                  :key="page.path"
+                  @click="navigateToPage(page.path)"
+                >
+                  <q-icon :name="page.icon" class="page-icon" />
+                  {{ page.name }}
+                </li>
+              </ul>
+              <div v-else class="no-results">No results found</div>
+            </div>
           </div>
+          <router-link to="/AboutUs" class="nav-link">About us</router-link>
+          <router-link to="/OurPlans" class="nav-link">Plans</router-link>
+          <router-link to="/ReportMissing" class="nav-link">Report</router-link>
+          <router-link to="/SearchMissing" class="nav-link">Search</router-link>
+          <router-link to="/SearchReports" class="nav-link">Reports</router-link>
+          <router-link v-if="isAdmin" to="/admin" class="nav-link admin-link">
+            <q-icon name="admin_panel_settings" /> Admin
+          </router-link>
+          <router-link to="/donate" class="donate-btn">
+            <q-icon name="monetization_on" /> Donate
+          </router-link>
         </div>
-        <router-link to="/AboutUs" class="nav-link">About us</router-link>
-        <router-link to="/OurPlans" class="nav-link">Plans</router-link>
-        <router-link to="/ReportMissing" class="nav-link">Report</router-link>
-        <router-link to="/SearchMissing" class="nav-link">Search</router-link>
-        <router-link to="/SearchReports" class="nav-link">Reports</router-link>
-        <router-link v-if="isAdmin" to="/admin" class="nav-link admin-link">
-          <q-icon name="admin_panel_settings" /> Admin
-        </router-link>
-        <router-link to="/donate" class="donate-btn">
-          <q-icon name="monetization_on" /> Donate
-        </router-link>
+      </nav>
+
+      <!-- Icons -->
+      <div class="icon-container">
+        <NotificationComponent ref="notificationComponent" />
+
+        <!-- Profile Dropdown -->
+        <q-btn-dropdown v-if="user" flat round dense class="icon-btn profile-dropdown">
+          <template v-slot:label>
+            <q-avatar size="32px" class="no-shadow">
+              <img :src="userAvatar" alt="User Avatar" class="avatar-img" />
+            </q-avatar>
+          </template>
+          <q-list>
+            <q-item clickable v-close-popup @click="goToProfile">
+              <q-item-section avatar>
+                <q-icon name="person" />
+              </q-item-section>
+              <q-item-section>Profile</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="goToSavedReports">
+              <q-item-section avatar>
+                <q-icon name="bookmark" :color="userPlan === 'pro' ? 'primary' : 'grey'">
+                  <q-tooltip v-if="userPlan !== 'pro'" class="bg-grey-8">
+                    Upgrade to Pro plan to save reports
+                  </q-tooltip>
+                </q-icon>
+              </q-item-section>
+              <q-item-section>Saved Reports</q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item clickable v-close-popup @click="handleLogout" class="text-negative">
+              <q-item-section avatar>
+                <q-icon name="logout" />
+              </q-item-section>
+              <q-item-section>Logout</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+
+        <!-- Sign In / Sign Up Dropdown -->
+        <q-btn-dropdown v-else flat round dense class="icon-btn auth-dropdown">
+          <template v-slot:label>
+            <q-icon name="person" size="32px" style="color: #2c3539" />
+          </template>
+          <q-list>
+            <q-item clickable v-close-popup @click="goToSignIn">
+              <q-item-section avatar>
+                <q-icon name="login" />
+              </q-item-section>
+              <q-item-section>Sign In</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="goToSignUp">
+              <q-item-section avatar>
+                <q-icon name="person_add" />
+              </q-item-section>
+              <q-item-section>Sign Up</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+
+        <!-- Burger Menu (Mobile) -->
+        <div
+          v-if="$q.screen.lt.md"
+          class="burger-icon"
+          @click="toggleMenu"
+          :class="{ 'is-menu-open': isMenuOpen }"
+        >
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+
+        <BurgerMenu ref="burgerMenu" @menuToggled="isMenuOpen = $event" />
       </div>
-    </nav>
-
-    <!-- Icons -->
-    <div class="icon-container">
-      <NotificationComponent />
-
-      <!-- Profile Dropdown -->
-      <q-btn-dropdown v-if="user" flat round dense class="icon-btn">
-        <template v-slot:label>
-          <q-avatar size="32px">
-            <img :src="userAvatar" alt="User Avatar" class="avatar-img" />
-          </q-avatar>
-        </template>
-        <q-list>
-          <q-item clickable v-close-popup @click="goToProfile">
-            <q-item-section>Profile</q-item-section>
-          </q-item>
-          <q-item clickable v-close-popup @click="handleLogout">
-            <q-item-section>Logout</q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-
-      <!-- Sign In / Sign Up Dropdown -->
-      <q-btn-dropdown v-else flat round dense class="icon-btn">
-        <template v-slot:label>
-          <q-icon name="person" size="32px" style="color: #2c3539" />
-        </template>
-        <q-list>
-          <q-item clickable v-close-popup @click="goToSignIn">
-            <q-item-section>Sign In</q-item-section>
-          </q-item>
-          <q-item clickable v-close-popup @click="goToSignUp">
-            <q-item-section>Sign Up</q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-
-      <!-- Burger Menu (Mobile) -->
-      <div
-        v-if="$q.screen.lt.md"
-        class="burger-icon"
-        @click="toggleMenu"
-        :class="{ 'is-menu-open': isMenuOpen }"
-      >
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-
-      <BurgerMenu ref="burgerMenu" @menuToggled="isMenuOpen = $event" />
-    </div>
-  </header>
+    </header>
+  </div>
 
   <main class="page-content"></main>
 </template>
@@ -106,19 +135,28 @@ import BurgerMenu from './BurgerMenu.vue'
 import NotificationComponent from './NotificationComponent.vue'
 
 export default {
+  name: 'NavBar',
   components: {
     BurgerMenu,
     NotificationComponent,
   },
-  setup() {
+  props: {
+    class: {
+      type: String,
+      default: '',
+    },
+  },
+  setup(props) {
     const router = useRouter()
     const route = useRoute()
     const searchQuery = ref('')
     const isTransparent = ref(false)
     const burgerMenu = ref(null)
+    const notificationComponent = ref(null)
     const isMenuOpen = ref(false)
     const user = ref(null)
     const isAdmin = ref(false)
+    const userPlan = ref(null)
     const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
     const userAvatar = ref(defaultAvatar)
 
@@ -176,11 +214,28 @@ export default {
       }
     }
 
+    const fetchUserPlan = async (userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_subscriptions')
+          .select('plan_type')
+          .eq('user_id', userId)
+          .single()
+
+        if (error) throw error
+        userPlan.value = data?.plan_type
+      } catch (error) {
+        console.error('Error fetching user plan:', error)
+        userPlan.value = null
+      }
+    }
+
     const fetchUser = async () => {
       const { data: userData } = await supabase.auth.getUser()
       if (userData?.user) {
         user.value = userData.user
         await fetchUserAvatar(userData.user.id)
+        await fetchUserPlan(userData.user.id)
 
         // Check if user is admin
         const { data: adminData } = await supabase
@@ -196,6 +251,13 @@ export default {
     const goToProfile = () => router.push('/ProfilePage')
     const goToSignIn = () => router.push('/SignIn')
     const goToSignUp = () => router.push('/SignUp')
+    const goToSavedReports = () => {
+      if (user.value && userPlan.value === 'pro') {
+        router.push('/saved-reports')
+      } else {
+        router.push('/OurPlans')
+      }
+    }
 
     const handleLogout = async () => {
       await supabase.auth.signOut()
@@ -215,6 +277,12 @@ export default {
         window.scrollY < window.innerHeight * 0.5
     }
 
+    const toggleNotifications = () => {
+      if (notificationComponent.value) {
+        notificationComponent.value.toggleNotifications()
+      }
+    }
+
     onMounted(() => {
       fetchUser()
       handleScroll()
@@ -231,9 +299,11 @@ export default {
       user,
       userAvatar,
       isAdmin,
+      userPlan,
       goToProfile,
       goToSignIn,
       goToSignUp,
+      goToSavedReports,
       handleLogout,
       isMenuOpen,
       burgerMenu,
@@ -241,6 +311,9 @@ export default {
       filteredPages,
       handleSearch,
       navigateToPage,
+      notificationComponent,
+      toggleNotifications,
+      navbarClass: props.class,
     }
   },
 }
@@ -251,6 +324,10 @@ $link-color: #49596b;
 $white: #f2f0e9;
 $black: black;
 $gray: rgb(90, 90, 90);
+
+.navbar-wrapper {
+  width: 100%;
+}
 
 .navbar {
   position: fixed;
@@ -312,7 +389,6 @@ $gray: rgb(90, 90, 90);
 }
 
 .donate-btn:hover {
-  background-color: $white;
   color: $link-color;
 }
 
@@ -320,6 +396,9 @@ $gray: rgb(90, 90, 90);
   color: #2c3539;
   text-decoration: none;
   font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .nav-link:hover {
@@ -537,6 +616,102 @@ $gray: rgb(90, 90, 90);
 
   .q-icon {
     font-size: 20px;
+  }
+}
+
+/* Enhanced Dropdown Styling */
+:deep(.q-menu) {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  padding: 8px;
+  min-width: 200px;
+}
+
+:deep(.q-item) {
+  border-radius: 8px;
+  margin: 4px 0;
+  min-height: 48px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f5f7fa;
+  }
+
+  .q-item__section--avatar {
+    min-width: 40px;
+    color: #49596b;
+  }
+
+  .q-icon {
+    font-size: 20px;
+  }
+
+  .q-item__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3539;
+  }
+
+  .q-tooltip {
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 4px;
+  }
+}
+
+:deep(.q-btn-dropdown) {
+  .q-btn__content {
+    padding: 4px;
+  }
+
+  .q-avatar {
+    border: 2px solid #e0e0e0;
+    transition: border-color 0.2s ease;
+    background: transparent;
+
+    &:hover {
+      border-color: #49596b;
+    }
+
+    .avatar-img {
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+}
+
+/* Profile Dropdown Specific */
+:deep(.profile-dropdown) {
+  .q-item {
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &.text-negative {
+      color: #c62828;
+      .q-icon {
+        color: #c62828;
+      }
+    }
+  }
+}
+
+/* Sign In/Up Dropdown Specific */
+:deep(.auth-dropdown) {
+  .q-item {
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 }
 </style>

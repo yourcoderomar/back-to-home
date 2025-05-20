@@ -36,7 +36,7 @@
     <!-- 📝 Paragraph + Button -->
     <div class="text-container">
       <p class="carousel-text">If you saw someone please provide a tip!</p>
-      <q-btn class="submit" label="Provide a tip" />
+      <q-btn class="submit" label="Provide a tip" to="/ReportMissing" />
     </div>
   </q-page>
 </template>

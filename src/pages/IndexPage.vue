@@ -18,47 +18,36 @@
     <q-page-container>
       <TopSection data-aos="fade-up" data-aos-duration="1000" />
       <section class="q-mb-md">
-        <HeroSection 
-          title="How Many Go Missing Every Day?" 
-          subtitle="" 
+        <HeroSection
+          title="How Many Go Missing Every Day?"
+          subtitle=""
           data-aos="fade-right"
           data-aos-duration="800"
         />
-        <LostPeopleSection 
-          data-aos="fade-up"
-          data-aos-delay="200"
-          data-aos-duration="800"
-        />
+        <LostPeopleSection data-aos="fade-up" data-aos-delay="200" data-aos-duration="800" />
       </section>
-      <HeroSection 
-        title="Real-Time Report" 
-        subtitle="" 
+      <HeroSection
+        title="Real-Time Report"
+        subtitle=""
         data-aos="fade-left"
         data-aos-duration="800"
       />
-      <StatsOverview 
-        :lost="120" 
-        :connectedPercentage="45.8" 
-        :found="80"
+      <StatsOverview
+        :lost="stats.lost"
+        :connectedPercentage="stats.connectedPercentage"
+        :found="stats.found"
         data-aos="zoom-in"
         data-aos-duration="1000"
       />
       <router-view />
-      <HeroSection 
-        title="Have You Seen Someone?" 
-        subtitle="" 
+      <HeroSection
+        title="Have You Seen Someone?"
+        subtitle=""
         data-aos="fade-right"
         data-aos-duration="800"
       />
-      <HaveYouSeen 
-        data-aos="fade-up"
-        data-aos-delay="200"
-        data-aos-duration="800"
-      />
-      <DownloadApp 
-        data-aos="fade-up"
-        data-aos-duration="1000"
-      />
+      <HaveYouSeen data-aos="fade-up" data-aos-delay="200" data-aos-duration="800" />
+      <DownloadApp data-aos="fade-up" data-aos-duration="1000" />
     </q-page-container>
 
     <FooterComponent />
@@ -66,18 +55,66 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import NavBar from '../components/NavBar.vue';
-import TopSection from '../components/TopSection.vue';
-import HaveYouSeen from '../components/HaveYouSeen.vue';
-import FooterComponent from '../components/Footer.vue';
-import LostPeopleSection from 'src/components/LostPeopleSection.vue';
-import HeroSection from 'src/components/HeroSection.vue';
-import BigText from 'src/components/BigText.vue';
-import StatsOverview from 'src/components/StatsOverview.vue';
-import DownloadApp from 'src/components/DownloadApp.vue';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import { onMounted, ref } from 'vue'
+import NavBar from '../components/NavBar.vue'
+import TopSection from '../components/TopSection.vue'
+import HaveYouSeen from '../components/HaveYouSeen.vue'
+import FooterComponent from '../components/Footer.vue'
+import LostPeopleSection from 'src/components/LostPeopleSection.vue'
+import HeroSection from 'src/components/HeroSection.vue'
+import BigText from 'src/components/BigText.vue'
+import StatsOverview from 'src/components/StatsOverview.vue'
+import DownloadApp from 'src/components/DownloadApp.vue'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
+import { supabase } from 'src/boot/supabase'
+
+const stats = ref({
+  lost: 0,
+  found: 0,
+  connectedPercentage: 0,
+})
+
+const fetchStats = async () => {
+  try {
+    // Get total missing reports
+    const { data: missingData, error: missingError } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('report_type', 'missing')
+
+    if (missingError) throw missingError
+
+    // Get total found reports
+    const { data: foundData, error: foundError } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('report_type', 'found')
+
+    if (foundError) throw foundError
+
+    // Get resolved reports
+    const { data: resolvedData, error: resolvedError } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('report_status', 'resolved')
+
+    if (resolvedError) throw resolvedError
+
+    const totalMissing = missingData?.length || 0
+    const totalFound = foundData?.length || 0
+    const totalResolved = resolvedData?.length || 0
+
+    // Calculate statistics
+    stats.value = {
+      lost: totalMissing,
+      found: totalFound,
+      connectedPercentage: totalMissing > 0 ? (totalResolved / totalMissing) * 100 : 0,
+    }
+  } catch (error) {
+    console.error('Error fetching statistics:', error)
+  }
+}
 
 onMounted(() => {
   AOS.init({
@@ -85,9 +122,25 @@ onMounted(() => {
     once: true,
     offset: 100,
     easing: 'ease-in-out',
-    anchorPlacement: 'top-bottom'
-  });
-});
+    anchorPlacement: 'top-bottom',
+  })
+
+  // Fetch initial stats
+  fetchStats()
+
+  // Set up real-time subscription for reports table
+  const reportsSubscription = supabase
+    .channel('reports-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => {
+      fetchStats() // Refresh stats when reports change
+    })
+    .subscribe()
+
+  // Cleanup subscription on component unmount
+  return () => {
+    reportsSubscription.unsubscribe()
+  }
+})
 </script>
 
 <style scoped>
@@ -125,7 +178,6 @@ onMounted(() => {
   z-index: 10;
   background-color: transparent;
 }
-
 
 /* Make sure the rest of the page doesn't overlap */
 .q-page-container {

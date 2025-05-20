@@ -76,6 +76,14 @@ const routes = [
     component: () => import('pages/CheckoutPage.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/saved-reports',
+    name: 'SavedReports',
+    component: () => import('pages/SavedReports.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
 
   {
     path: '/admin',

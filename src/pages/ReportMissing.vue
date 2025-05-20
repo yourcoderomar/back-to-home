@@ -55,6 +55,7 @@
             :initialValues="formValues"
             :link-text="'Already filled a report?'"
             :link-to="'/'"
+            :loading="isLoading"
             @formSubmitted="handleFormSubmission"
             @closeForm="showForm = false"
             class="form"
@@ -87,6 +88,7 @@ export default {
   data() {
     return {
       showForm: false,
+      isLoading: false,
       formValues: {
         report_type: 'found', // Auto-set
         reporter_name: '',
@@ -190,6 +192,7 @@ export default {
   methods: {
     async handleFormSubmission(formData) {
       try {
+        this.isLoading = true
         let imageUrl = null
         console.log('📌 Form Data Received:', formData)
 
@@ -203,6 +206,7 @@ export default {
           if (!(file instanceof File)) {
             console.error('❌ Invalid file object:', file)
             this.$refs.toast.showToast('Invalid image file. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -218,6 +222,7 @@ export default {
           if (uploadError) {
             console.error('❌ File upload error:', uploadError.message)
             this.$refs.toast.showToast('Failed to upload image. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -229,6 +234,7 @@ export default {
           if (!publicUrl) {
             console.error('❌ Error retrieving image URL.')
             this.$refs.toast.showToast('Failed to process image. Please try again.', 'error')
+            this.isLoading = false
             return
           }
 
@@ -256,6 +262,7 @@ export default {
         if (reportInsertError) {
           console.error("❌ Error inserting into 'reports':", reportInsertError.message)
           this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+          this.isLoading = false
           return
         }
 
@@ -280,15 +287,18 @@ export default {
         if (foundReportInsertError) {
           console.error("❌ Error inserting into 'found_reports':", foundReportInsertError.message)
           this.$refs.toast.showToast('Failed to submit report details. Please try again.', 'error')
+          this.isLoading = false
           return
         }
 
         console.log('✅ Report submitted successfully!')
         this.$refs.toast.showToast('Report submitted successfully!', 'success')
         this.showForm = false // Close form after submission
-      } catch (err) {
-        console.error('❌ Unexpected error:', err)
-        this.$refs.toast.showToast('An unexpected error occurred. Please try again.', 'error')
+      } catch (error) {
+        console.error('Error submitting report:', error)
+        this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+      } finally {
+        this.isLoading = false
       }
     },
   },

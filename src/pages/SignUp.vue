@@ -17,93 +17,99 @@
           :redirectMessage="'Already have an account?'"
           :redirectPath="'/signin'"
           :redirectLinkText="'Sign In'"
+          :loading="isLoading"
           @formSubmitted="handleSignup"
         />
       </div>
-      <FooterComponent/>
+      <FooterComponent />
       <ToastNotification ref="toast" />
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
-import { ref, getCurrentInstance } from "vue";
-import { useRouter } from "vue-router";
-import AuthForm from "src/components/AuthForm.vue";
-import NavBar from "src/components/NavBar.vue";
-import FooterComponent from "src/components/Footer.vue";
-import ToastNotification from "components/ToastNotification.vue";
-import { signUpUser } from "src/services/authService";
+import { ref, getCurrentInstance } from 'vue'
+import { useRouter } from 'vue-router'
+import AuthForm from 'src/components/AuthForm.vue'
+import NavBar from 'src/components/NavBar.vue'
+import FooterComponent from 'src/components/Footer.vue'
+import ToastNotification from 'components/ToastNotification.vue'
+import { signUpUser } from 'src/services/authService'
 
 export default {
   components: { AuthForm, NavBar, FooterComponent, ToastNotification },
   setup() {
-    const router = useRouter();
-    const { proxy } = getCurrentInstance();
-    const password = ref('');
+    const router = useRouter()
+    const { proxy } = getCurrentInstance()
+    const password = ref('')
+    const isLoading = ref(false)
 
     const formFields = ref([
-      { 
-        name: "email", 
-        label: "Email", 
-        type: "email", 
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'email',
         required: true,
         rules: [
-          val => !!val || 'Email is required',
-          val => /.+@.+\..+/.test(val) || 'Please enter a valid email'
-        ]
+          (val) => !!val || 'Email is required',
+          (val) => /.+@.+\..+/.test(val) || 'Please enter a valid email',
+        ],
       },
-      { 
-        name: "password", 
-        label: "Password", 
-        type: "password", 
+      {
+        name: 'password',
+        label: 'Password',
+        type: 'password',
         required: true,
         rules: [
-          val => !!val || 'Password is required',
-          val => val.length >= 6 || 'Password must be at least 6 characters'
+          (val) => !!val || 'Password is required',
+          (val) => val.length >= 6 || 'Password must be at least 6 characters',
         ],
         onUpdate: (val) => {
-          password.value = val;
-        }
+          password.value = val
+        },
       },
-      { 
-        name: "confirm_password", 
-        label: "Confirm Password", 
-        type: "password", 
+      {
+        name: 'confirm_password',
+        label: 'Confirm Password',
+        type: 'password',
         required: true,
         rules: [
-          val => !!val || 'Please confirm your password',
-          val => val === password.value || 'Passwords do not match'
-        ]
+          (val) => !!val || 'Please confirm your password',
+          (val) => val === password.value || 'Passwords do not match',
+        ],
       },
-    ]);
+    ])
 
     const handleSignup = async (formData) => {
       try {
+        isLoading.value = true
         if (formData.password !== formData.confirm_password) {
-          proxy.$refs.toast.showToast('Passwords do not match', 'error');
-          return;
+          proxy.$refs.toast.showToast('Passwords do not match', 'error')
+          isLoading.value = false
+          return
         }
 
-        const result = await signUpUser(formData.email, formData.password);
+        const result = await signUpUser(formData.email, formData.password)
 
         if (result.error) {
-          proxy.$refs.toast.showToast(result.error, 'error');
+          proxy.$refs.toast.showToast(result.error, 'error')
         } else {
-          proxy.$refs.toast.showToast('Please check your email to verify your account.', 'success');
+          proxy.$refs.toast.showToast('Please check your email to verify your account.', 'success')
           setTimeout(() => {
-            router.push("/SignIn");
-          }, 5000);
+            router.push('/SignIn')
+          }, 5000)
         }
       } catch (error) {
-        console.error("Signup error:", error);
-        proxy.$refs.toast.showToast('An error occurred during signup', 'error');
+        console.error('Signup error:', error)
+        proxy.$refs.toast.showToast('An error occurred during signup', 'error')
+      } finally {
+        isLoading.value = false
       }
-    };
+    }
 
-    return { formFields, handleSignup };
+    return { formFields, handleSignup, isLoading }
   },
-};
+}
 </script>
 
 <style scoped>

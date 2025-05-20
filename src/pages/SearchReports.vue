@@ -287,7 +287,17 @@
         <div class="results-section" v-if="reports.length > 0 || loading">
           <div class="row justify-between items-center">
             <div class="text-h6">Search Results</div>
-            <q-btn color="primary" icon="search" label="New Search" @click="resetSearch" flat />
+            <div class="row q-gutter-sm">
+              <q-btn
+                v-if="isProUser"
+                color="primary"
+                icon="save"
+                label="Save Search"
+                @click="saveCurrentSearch"
+                flat
+              />
+              <q-btn color="primary" icon="search" label="New Search" @click="resetSearch" flat />
+            </div>
           </div>
           <div v-if="loading" class="loading-container">
             <q-spinner-dots color="primary" size="40px" />
@@ -323,6 +333,15 @@
                 <q-item-section side>
                   <div class="row items-center q-gutter-md">
                     <q-btn
+                      v-if="isProUser"
+                      round
+                      color="primary"
+                      icon="bookmark"
+                      size="sm"
+                      @click.stop="saveReport(report)"
+                      class="save-btn"
+                    />
+                    <q-btn
                       v-if="report.reporter_contact"
                       round
                       color="primary"
@@ -350,17 +369,62 @@
     </q-page-container>
     <FooterComponent class="footer" />
     <ToastNotification ref="toastRef" />
+
+    <!-- Saved Searches Dialog -->
+    <q-dialog v-model="showSavedSearches">
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">Saved Searches</div>
+        </q-card-section>
+
+        <q-card-section>
+          <q-list>
+            <q-item v-for="search in savedSearches" :key="search.id" clickable v-ripple>
+              <q-item-section>
+                <q-item-label>{{ search.search_criteria.name || 'Unnamed Search' }}</q-item-label>
+                <q-item-label caption>
+                  {{ new Date(search.created_at).toLocaleDateString() }}
+                </q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn flat round icon="delete" @click.stop="deleteSavedSearch(search.id)" />
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn flat round icon="search" @click.stop="loadSavedSearch(search)" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Add Saved Searches Button -->
+    <q-btn
+      v-if="isProUser"
+      flat
+      round
+      icon="history"
+      @click="showSavedSearches = true"
+      class="fixed-bottom-right q-ma-md"
+    />
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { supabase } from 'src/boot/supabase'
 import NavBar from 'src/components/NavBar.vue'
 import FooterComponent from 'src/components/Footer.vue'
 import HeroSection from 'src/components/HeroSection.vue'
 import { useRouter } from 'vue-router'
 import ToastNotification from '../components/ToastNotification.vue'
+import { savedSearchService } from 'src/services/savedSearchService'
 
 export default {
   name: 'SearchReports',
@@ -371,12 +435,12 @@ export default {
     ToastNotification,
   },
   setup() {
+    const router = useRouter()
+    const toastRef = ref(null)
     const loading = ref(false)
     const reports = ref([])
-    const router = useRouter()
+    const isProUser = ref(false)
     const currentStep = ref(0)
-    const toastRef = ref(null)
-
     const searchQuery = ref({
       reportType: null,
       gender: null,
@@ -386,12 +450,43 @@ export default {
       name: null,
       description: null,
     })
+    const savedSearches = ref([])
+    const showSavedSearches = ref(false)
 
     const genderOptions = [
       { label: 'Male', value: 'male' },
       { label: 'Female', value: 'female' },
       { label: 'Other', value: 'other' },
     ]
+
+    const hasSearchCriteria = computed(() => {
+      return Object.values(searchQuery.value).some((value) => value !== null && value !== '')
+    })
+
+    const checkUserPlan = async () => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError || !user) {
+          router.push('/SignIn')
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('user_plan, plan:plan(plan_name)')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error) throw error
+
+        isProUser.value = data.plan.plan_name === 'pro'
+      } catch (error) {
+        console.error('Error checking user plan:', error)
+      }
+    }
 
     const selectReportType = (type) => {
       searchQuery.value.reportType = type
@@ -423,17 +518,6 @@ export default {
 
       loading.value = true
       try {
-        // Log the search criteria
-        console.log('Search Criteria:', {
-          reportType: searchQuery.value.reportType,
-          gender: searchQuery.value.gender,
-          age: searchQuery.value.age,
-          date: searchQuery.value.date,
-          location: searchQuery.value.location,
-          name: searchQuery.value.name,
-          description: searchQuery.value.description,
-        })
-
         // Query missing reports with reports join
         let missingQuery = supabase.from('missing_reports').select(`
             *,
@@ -465,55 +549,57 @@ export default {
           }
         }
 
-        if (searchQuery.value.gender) {
-          missingQuery = missingQuery.eq('gender', searchQuery.value.gender)
-          foundQuery = foundQuery.eq('gender', searchQuery.value.gender)
-        }
+        // Apply pro user filters if user is pro
+        if (isProUser.value) {
+          if (searchQuery.value.gender) {
+            missingQuery = missingQuery.eq('gender', searchQuery.value.gender)
+            foundQuery = foundQuery.eq('gender', searchQuery.value.gender)
+          }
 
-        if (searchQuery.value.age) {
-          const age = parseInt(searchQuery.value.age)
-          const ageRange = 5 // Allow for 5 years difference
-          missingQuery = missingQuery.gte('age', age - ageRange).lte('age', age + ageRange)
-          foundQuery = foundQuery
-            .gte('age_estimate', age - ageRange)
-            .lte('age_estimate', age + ageRange)
-        }
-
-        if (searchQuery.value.date) {
-          try {
-            // Parse the date from DD/MM/YYYY format
-            const [day, month, year] = searchQuery.value.date.split('/')
-            const searchDate = new Date(year, month - 1, day)
-
-            // Validate if the date is valid
-            if (isNaN(searchDate.getTime())) {
-              throw new Error('Invalid date format')
-            }
-
-            const dateRange = 7 // Allow for 7 days difference
-            const startDate = new Date(searchDate)
-            startDate.setDate(startDate.getDate() - dateRange)
-            const endDate = new Date(searchDate)
-            endDate.setDate(startDate.getDate() + dateRange)
-
-            // Format dates for the query
-            const formatDateForQuery = (date) => {
-              return date.toISOString().split('T')[0] + 'T00:00:00'
-            }
-
-            missingQuery = missingQuery
-              .filter('reports.created_at', 'gte', formatDateForQuery(startDate))
-              .filter('reports.created_at', 'lte', formatDateForQuery(endDate))
+          if (searchQuery.value.age) {
+            const age = parseInt(searchQuery.value.age)
+            const ageRange = 5 // Allow for 5 years difference
+            missingQuery = missingQuery.gte('age', age - ageRange).lte('age', age + ageRange)
             foundQuery = foundQuery
-              .filter('reports.created_at', 'gte', formatDateForQuery(startDate))
-              .filter('reports.created_at', 'lte', formatDateForQuery(endDate))
-          } catch (error) {
-            console.error('Error processing date:', error)
-            toastRef.value?.showToast('Invalid date format. Please use DD/MM/YYYY', 'error')
-            return
+              .gte('age_estimate', age - ageRange)
+              .lte('age_estimate', age + ageRange)
+          }
+
+          if (searchQuery.value.date) {
+            try {
+              const [day, month, year] = searchQuery.value.date.split('/')
+              const searchDate = new Date(year, month - 1, day)
+              const dateRange = 7 // Allow for 7 days difference
+              const startDate = new Date(searchDate)
+              startDate.setDate(startDate.getDate() - dateRange)
+              const endDate = new Date(searchDate)
+              endDate.setDate(startDate.getDate() + dateRange)
+
+              const formatDateForQuery = (date) => {
+                return date.toISOString().split('T')[0] + 'T00:00:00'
+              }
+
+              missingQuery = missingQuery
+                .filter('reports.created_at', 'gte', formatDateForQuery(startDate))
+                .filter('reports.created_at', 'lte', formatDateForQuery(endDate))
+              foundQuery = foundQuery
+                .filter('reports.created_at', 'gte', formatDateForQuery(startDate))
+                .filter('reports.created_at', 'lte', formatDateForQuery(endDate))
+            } catch (error) {
+              console.error('Error processing date:', error)
+              toastRef.value?.showToast('Invalid date format. Please use DD/MM/YYYY', 'error')
+              return
+            }
+          }
+
+          if (searchQuery.value.description) {
+            const description = searchQuery.value.description.trim()
+            missingQuery = missingQuery.ilike('description', `%${description}%`)
+            foundQuery = foundQuery.ilike('description', `%${description}%`)
           }
         }
 
+        // Apply basic filters for all users
         if (searchQuery.value.location) {
           const location = searchQuery.value.location.trim()
           missingQuery = missingQuery.ilike('last_seen_location', `%${location}%`)
@@ -526,27 +612,11 @@ export default {
           foundQuery = foundQuery.ilike('found_person_name', `%${name}%`)
         }
 
-        if (searchQuery.value.description) {
-          const description = searchQuery.value.description.trim()
-          missingQuery = missingQuery.ilike('description', `%${description}%`)
-          foundQuery = foundQuery.ilike('description', `%${description}%`)
-        }
-
         // Execute both queries
         const [missingResult, foundResult] = await Promise.all([missingQuery, foundQuery])
 
-        if (missingResult.error) {
-          console.error('Missing reports error:', missingResult.error)
-          throw missingResult.error
-        }
-        if (foundResult.error) {
-          console.error('Found reports error:', foundResult.error)
-          throw foundResult.error
-        }
-
-        // Log the results
-        console.log('Missing Results:', missingResult.data)
-        console.log('Found Results:', foundResult.data)
+        if (missingResult.error) throw missingResult.error
+        if (foundResult.error) throw foundResult.error
 
         // Process both sets of data
         const processReports = async (reports) => {
@@ -593,14 +663,10 @@ export default {
           (a, b) => new Date(b.created_at) - new Date(a.created_at),
         )
 
-        // Log final results
-        console.log('Final Processed Results:', reports.value)
-
-        // Show success toast with result count
         toastRef.value?.showToast(`Found ${reports.value.length} reports`, 'success')
       } catch (error) {
         console.error('Error searching reports:', error)
-        toastRef.value?.showToast('Failed to search reports: ' + error.message, 'error')
+        toastRef.value?.showToast('Error searching reports. Please try again.', 'error')
       } finally {
         loading.value = false
       }
@@ -609,9 +675,7 @@ export default {
     const viewReport = (report) => {
       router.push({
         path: `/ReportDetails/${report.id}`,
-        query: {
-          imageUrl: report.photo_url,
-        },
+        query: { imageUrl: report.photo_url },
       })
     }
 
@@ -705,6 +769,153 @@ export default {
       }
     }
 
+    const saveSearch = async () => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError || !user) throw authError
+
+        const { error } = await supabase.from('saved_searches').insert([
+          {
+            user_id: user.id,
+            search_criteria: searchQuery.value,
+            created_at: new Date().toISOString(),
+          },
+        ])
+
+        if (error) throw error
+
+        toastRef.value?.showToast('Search criteria saved successfully!', 'success')
+      } catch (error) {
+        console.error('Error saving search:', error)
+        toastRef.value?.showToast('Error saving search criteria', 'error')
+      }
+    }
+
+    const exportResults = () => {
+      try {
+        const csvContent = [
+          ['Report ID', 'Name', 'Type', 'Location', 'Date', 'Status'],
+          ...reports.value.map((report) => [
+            report.id,
+            report.name,
+            report.missing_person_name ? 'Missing' : 'Found',
+            report.location,
+            new Date(report.created_at).toLocaleDateString(),
+            report.status,
+          ]),
+        ]
+          .map((row) => row.join(','))
+          .join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        link.setAttribute('download', `search_results_${new Date().toISOString()}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } catch (error) {
+        console.error('Error exporting results:', error)
+        toastRef.value?.showToast('Error exporting results', 'error')
+      }
+    }
+
+    const loadSavedSearches = async () => {
+      if (!isProUser.value) return
+
+      try {
+        savedSearches.value = await savedSearchService.getSavedSearches()
+      } catch (err) {
+        console.error('Error loading saved searches:', err)
+        toastRef.value?.showToast('Failed to load saved searches', 'error')
+      }
+    }
+
+    const saveCurrentSearch = async () => {
+      if (!isProUser.value) return
+
+      try {
+        const searchCriteria = {
+          reportType: searchQuery.value.reportType,
+          name: searchQuery.value.name,
+          location: searchQuery.value.location,
+          gender: searchQuery.value.gender,
+          age: searchQuery.value.age,
+          date: searchQuery.value.date,
+          description: searchQuery.value.description,
+        }
+
+        await savedSearchService.saveSearch(searchCriteria)
+        toastRef.value?.showToast('Search saved successfully', 'success')
+        await loadSavedSearches()
+      } catch (err) {
+        console.error('Error saving search:', err)
+        toastRef.value?.showToast('Failed to save search', 'error')
+      }
+    }
+
+    const loadSavedSearch = async (search) => {
+      const criteria = search.search_criteria
+      searchQuery.value.reportType = criteria.reportType
+      searchQuery.value.name = criteria.name
+      searchQuery.value.location = criteria.location
+      searchQuery.value.gender = criteria.gender
+      searchQuery.value.age = criteria.age
+      searchQuery.value.date = criteria.date
+      searchQuery.value.description = criteria.description
+
+      await handleSearch()
+      showSavedSearches.value = false
+    }
+
+    const deleteSavedSearch = async (id) => {
+      try {
+        await savedSearchService.deleteSavedSearch(id)
+        toastRef.value?.showToast('Saved search deleted', 'success')
+        await loadSavedSearches()
+      } catch (err) {
+        console.error('Error deleting saved search:', err)
+        toastRef.value?.showToast('Failed to delete saved search', 'error')
+      }
+    }
+
+    const saveReport = async (report) => {
+      if (!isProUser.value) return
+
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError || !user) throw authError
+
+        // Remove the ID extraction and use the full report ID
+        const { error } = await supabase.from('saved_reports').insert([
+          {
+            user_id: user.id,
+            report_id: report.id,
+            report_type: report.missing_person_name ? 'missing' : 'found',
+            created_at: new Date().toISOString(),
+          },
+        ])
+
+        if (error) throw error
+
+        toastRef.value?.showToast('Report saved successfully!', 'success')
+      } catch (err) {
+        console.error('Error saving report:', err)
+        toastRef.value?.showToast('Failed to save report', 'error')
+      }
+    }
+
+    onMounted(checkUserPlan)
+    onMounted(loadSavedSearches)
+
     return {
       loading,
       reports,
@@ -729,6 +940,17 @@ export default {
       hasInputForCurrentStep,
       callReporter,
       resetSearch,
+      saveSearch,
+      exportResults,
+      isProUser,
+      hasSearchCriteria,
+      savedSearches,
+      showSavedSearches,
+      loadSavedSearches,
+      saveCurrentSearch,
+      loadSavedSearch,
+      deleteSavedSearch,
+      saveReport,
     }
   },
 }

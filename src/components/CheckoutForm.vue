@@ -1,62 +1,34 @@
 <template>
   <div class="checkout-container q-pa-md">
-    <HeroSection 
-    title="Checkout"
-    />
+    <HeroSection title="Checkout" />
     <ToastNotification ref="toastRef" />
     <div class="row q-col-gutter-md">
       <!-- Left Side - Billing Info -->
       <div class="col-12 col-md-8">
         <div class="billing-info">
           <h2 class="text-h5">BILLING INFO</h2>
-          
+
           <div class="row q-col-gutter-md">
             <div class="col-12">
-              <q-select
-                v-model="country"
-                :options="countries"
-                label="Country *"
-                outlined
-                dense
-              />
+              <q-select v-model="country" :options="countries" label="Country *" outlined dense />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="firstName"
-                label="First Name *"
-                outlined
-                dense
-              />
+              <q-input v-model="firstName" label="First Name *" outlined dense />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="lastName"
-                label="Last Name *"
-                outlined
-                dense
-              />
+              <q-input v-model="lastName" label="Last Name *" outlined dense />
             </div>
-            
+
             <div class="col-12">
-              <q-input
-                v-model="companyName"
-                label="Company Name"
-                outlined
-                dense
-              />
+              <q-input v-model="companyName" label="Company Name" outlined dense />
             </div>
-            
+
             <div class="col-12">
-              <q-input
-                v-model="address"
-                label="Street Address *"
-                outlined
-                dense
-              />
+              <q-input v-model="address" label="Street Address *" outlined dense />
             </div>
-            
+
             <div class="col-12">
               <q-input
                 v-model="apartment"
@@ -65,54 +37,27 @@
                 dense
               />
             </div>
-            
+
             <div class="col-12">
-              <q-input
-                v-model="city"
-                label="Town / City *"
-                outlined
-                dense
-              />
+              <q-input v-model="city" label="Town / City *" outlined dense />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="state"
-                label="State / County"
-                outlined
-                dense
-              />
+              <q-input v-model="state" label="State / County" outlined dense />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="postcode"
-                label="Postcode / ZIP *"
-                outlined
-                dense
-              />
+              <q-input v-model="postcode" label="Postcode / ZIP *" outlined dense />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="email"
-                label="Email Address *"
-                outlined
-                dense
-                type="email"
-              />
+              <q-input v-model="email" label="Email Address *" outlined dense type="email" />
             </div>
-            
+
             <div class="col-12 col-sm-6">
-              <q-input
-                v-model="phone"
-                label="Phone *"
-                outlined
-                dense
-                type="tel"
-              />
+              <q-input v-model="phone" label="Phone *" outlined dense type="tel" />
             </div>
-            
+
             <div class="col-12">
               <q-input
                 v-model="notes"
@@ -126,12 +71,12 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Right Side - Order Summary -->
       <div class="col-12 col-md-4">
         <div class="cart-totals bg-grey-2">
           <h2 class="text-h5">SUMMARY</h2>
-          
+
           <div class="row q-col-gutter-sm">
             <div class="col-12">
               <div class="row justify-between">
@@ -147,24 +92,22 @@
                 <span>${{ amount }}</span>
               </div>
             </div>
-            
+
             <div class="col-12">
               <h3 class="text-subtitle1">PAYMENT METHOD</h3>
-              <q-option-group
-                v-model="paymentMethod"
-                :options="paymentOptions"
-                type="radio"
-              />
+              <q-option-group v-model="paymentMethod" :options="paymentOptions" type="radio" />
             </div>
-            
+
             <div class="col-12 q-mt-lg">
               <q-checkbox
                 v-model="termsAccepted"
-                :label="type === 'donation' 
-                  ? 'I confirm this is a voluntary donation and I have read the terms'
-                  : 'I agree to the plan upgrade terms and conditions'"
+                :label="
+                  type === 'donation'
+                    ? 'I confirm this is a voluntary donation and I have read the terms'
+                    : 'I agree to the plan upgrade terms and conditions'
+                "
               />
-              
+
               <q-btn
                 class="full-width q-mt-md"
                 color="primary"
@@ -182,7 +125,7 @@
 </template>
 
 <script>
-import { ref} from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from 'src/boot/supabase'
 import HeroSection from './HeroSection.vue'
@@ -192,29 +135,29 @@ export default {
   name: 'CheckoutForm',
   components: {
     HeroSection,
-    ToastNotification
+    ToastNotification,
   },
   props: {
     amount: {
       type: Number,
-      required: true
+      required: true,
     },
     type: {
       type: String,
       required: true,
-      validator: value => ['donation', 'premium'].includes(value)
-    }
+      validator: (value) => ['donation', 'premium'].includes(value),
+    },
   },
   setup(props) {
     const router = useRouter()
     const toastRef = ref(null)
-    
+
     const showToast = (message, type) => {
       if (toastRef.value) {
         toastRef.value.showToast(message, type)
       }
     }
-    
+
     const firstName = ref('')
     const lastName = ref('')
     const companyName = ref('')
@@ -230,29 +173,29 @@ export default {
     const termsAccepted = ref(false)
     const paymentMethod = ref('bank')
     const isProcessing = ref(false)
-    
+
     const countries = ['United Kingdom', 'United States', 'Canada', 'Australia']
-    
+
     const paymentOptions = [
       {
         label: [
           'Direct Bank Transfer',
           'Make your payment directly into our bank account.',
           'Please use your Order ID as the payment reference.',
-          'Your order won\'t be shipped until the funds have cleared in our account.'
+          "Your order won't be shipped until the funds have cleared in our account.",
         ].join('\n'),
-        value: 'bank'
+        value: 'bank',
       },
       {
         label: 'Cheque Payment',
-        value: 'cheque'
+        value: 'cheque',
       },
       {
         label: 'PayPal',
-        value: 'paypal'
-      }
+        value: 'paypal',
+      },
     ]
-    
+
     const handleCheckout = async () => {
       if (!termsAccepted.value) {
         showToast('Please accept the terms and conditions', 'error')
@@ -263,8 +206,14 @@ export default {
 
       try {
         // Get current user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError) {
+          throw new Error('Authentication error: ' + authError.message)
+        }
+        if (!user) {
           throw new Error('User not authenticated')
         }
 
@@ -290,14 +239,21 @@ export default {
                 postcode: postcode.value,
                 email: email.value,
                 phone: phone.value,
-                notes: notes.value
-              }
-            }
+                notes: notes.value,
+              },
+            },
           ])
           .select()
           .single()
 
-        if (paymentError) throw paymentError
+        if (paymentError) {
+          console.error('Payment creation error:', paymentError)
+          throw new Error('Failed to create payment record: ' + paymentError.message)
+        }
+
+        if (!payment) {
+          throw new Error('No payment record was created')
+        }
 
         // Process payment based on selected method
         let paymentSuccess = false
@@ -319,42 +275,50 @@ export default {
 
         if (paymentSuccess) {
           // Update payment status
-          await supabase
+          const { error: updateError } = await supabase
             .from('payments')
             .update({ status: 'completed' })
             .eq('id', payment.id)
+
+          if (updateError) {
+            console.error('Payment status update error:', updateError)
+            throw new Error('Failed to update payment status: ' + updateError.message)
+          }
 
           // If this is a plan upgrade, update the user's plan
           if (props.type === 'premium') {
             const { error: planError } = await supabase
               .from('users')
-              .update({ 
+              .update({
                 user_plan: 2, // Assuming 2 is the ID for pro plan
-                plan_start_date: new Date().toISOString()
+                plan_start_date: new Date().toISOString(),
               })
               .eq('user_id', user.id)
 
-            if (planError) throw planError
+            if (planError) {
+              console.error('Plan update error:', planError)
+              throw new Error('Failed to update user plan: ' + planError.message)
+            }
           }
 
           showToast(
-            props.type === 'premium' 
-              ? 'Plan upgrade successful! Welcome to Pro!' 
+            props.type === 'premium'
+              ? 'Plan upgrade successful! Welcome to Pro!'
               : 'Thank you for your donation!',
-            'success'
+            'success',
           )
 
           // Redirect to profile page
-          router.push('/profile')
+          router.push('/ProfilePage')
         }
       } catch (error) {
         console.error('Checkout error:', error)
-        showToast('An error occurred during checkout. Please try again.', 'error')
+        showToast(error.message || 'An error occurred during checkout. Please try again.', 'error')
       } finally {
         isProcessing.value = false
       }
     }
-    
+
     return {
       firstName,
       lastName,
@@ -374,9 +338,9 @@ export default {
       countries,
       paymentOptions,
       handleCheckout,
-      toastRef
+      toastRef,
     }
-  }
+  },
 }
 </script>
 
@@ -391,31 +355,31 @@ export default {
   background: white;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
 }
 
 .billing-info h2 {
   margin-bottom: 25px;
-  color: #2C3539;
+  color: #2c3539;
 }
 
 .cart-totals {
   background: white;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   height: fit-content;
 }
 
 .cart-totals h2 {
   margin-bottom: 25px;
-  color: #2C3539;
+  color: #2c3539;
 }
 
 .cart-totals h3 {
   margin: 20px 0 15px;
-  color: #2C3539;
+  color: #2c3539;
 }
 
 .row.justify-between {
@@ -439,4 +403,4 @@ export default {
     padding: 20px;
   }
 }
-</style> 
+</style>

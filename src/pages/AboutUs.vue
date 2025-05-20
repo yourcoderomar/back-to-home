@@ -4,6 +4,7 @@ import FooterComponent from 'src/components/Footer.vue'
 import NavBar from 'src/components/NavBar.vue'
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { supabase } from 'src/boot/supabase'
 
 const aboutText =
   'Back2Home is a dedicated platform created by graduating students to address the critical issue of missing persons. What started as an academic project has evolved into a powerful tool that combines advanced technology with compassionate service to help reunite families.'
@@ -14,7 +15,7 @@ const teamText =
 const teamMembers = ref([
   {
     name: 'Team Member 1',
-    image: '/images/omar.jpg',
+    image: '/images/omar2.jpg',
   },
   {
     name: 'Team Member 2',
@@ -24,7 +25,73 @@ const teamMembers = ref([
     name: 'Team Member 3',
     image: '/images/omar.jpg',
   },
+  {
+    name: 'Team Member 4',
+    image: '/images/omar.jpg',
+  },
+  {
+    name: 'Team Member 5',
+    image: '/images/omar.jpg',
+  },
+  {
+    name: 'Team Member 6',
+    image: '/images/omar.jpg',
+  },
 ])
+
+const stats = ref({
+  totalReports: 0,
+  resolvedCases: 0,
+  totalEntries: 0,
+  activeUsers: 0,
+})
+
+const fetchStats = async () => {
+  try {
+    // Get total reports
+    const { data: reportsData, error: reportsError } = await supabase.from('reports').select('id')
+
+    if (reportsError) throw reportsError
+
+    // Get resolved cases
+    const { data: resolvedData, error: resolvedError } = await supabase
+      .from('reports')
+      .select('id')
+      .eq('report_status', 'resolved')
+
+    if (resolvedError) throw resolvedError
+
+    // Get total database entries (reports + missing_reports + found_reports)
+    const { count: missingCount, error: missingError } = await supabase
+      .from('missing_reports')
+      .select('*', { count: 'exact', head: true })
+
+    if (missingError) throw missingError
+
+    const { count: foundCount, error: foundError } = await supabase
+      .from('found_reports')
+      .select('*', { count: 'exact', head: true })
+
+    if (foundError) throw foundError
+
+    // Get total users count
+    const { count: totalUsers, error: usersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+
+    if (usersError) throw usersError
+
+    // Update stats
+    stats.value = {
+      totalReports: reportsData?.length || 0,
+      resolvedCases: resolvedData?.length || 0,
+      totalEntries: (missingCount || 0) + (foundCount || 0),
+      activeUsers: totalUsers || 0,
+    }
+  } catch (error) {
+    console.error('Error fetching statistics:', error)
+  }
+}
 
 onMounted(() => {
   AOS.init({
@@ -32,6 +99,22 @@ onMounted(() => {
     once: true,
     offset: 100,
   })
+
+  // Fetch initial stats
+  fetchStats()
+
+  // Set up real-time subscription for reports table
+  const reportsSubscription = supabase
+    .channel('reports-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => {
+      fetchStats() // Refresh stats when reports change
+    })
+    .subscribe()
+
+  // Cleanup subscription on component unmount
+  return () => {
+    reportsSubscription.unsubscribe()
+  }
 })
 </script>
 
@@ -51,7 +134,7 @@ onMounted(() => {
 
       <!-- Full Width Image -->
       <div class="full-width-image" data-aos="zoom-in">
-        <img src="/images/habal.jpg" alt="Team working together" />
+        <img src="/images/1.jpg" alt="Team working together" />
       </div>
 
       <!-- Quote Section -->
@@ -97,15 +180,21 @@ onMounted(() => {
           v-for="(stat, index) in [
             'Missing reports handled',
             'Cases resolved',
-            'Million database entries',
-            'Active volunteers',
+            'Database entries',
+            'Total users',
           ]"
           :key="index"
           class="stat-item"
           :data-aos="'fade-up'"
           :data-aos-delay="index * 100"
         >
-          <h3>{{ [600, 700, 1.2, 110][index] }}</h3>
+          <h3>
+            {{
+              [stats.totalReports, stats.resolvedCases, stats.totalEntries, stats.activeUsers][
+                index
+              ]
+            }}
+          </h3>
           <p>{{ stat }}</p>
         </div>
       </div>
@@ -219,6 +308,8 @@ cite {
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   padding: 0 40px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .team-member {
@@ -276,13 +367,19 @@ cite {
   }
 
   .team-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     padding: 0 20px;
   }
 
   .statistics {
     grid-template-columns: 1fr 1fr;
     padding: 40px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-grid {
+    grid-template-columns: 1fr;
   }
 }
 
