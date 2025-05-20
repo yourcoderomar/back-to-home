@@ -1,6 +1,6 @@
 <template>
   <q-toolbar>
-    <q-toolbar-title>My App</q-toolbar-title>
+    <q-toolbar-title>Back2Home</q-toolbar-title>
     <q-btn v-if="user" label="Logout" color="red" @click="handleLogout" />
   </q-toolbar>
 </template>
