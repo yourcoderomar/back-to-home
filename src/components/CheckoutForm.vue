@@ -2,6 +2,43 @@
   <div class="checkout-container q-pa-md">
     <HeroSection title="Checkout" />
     <ToastNotification ref="toastRef" />
+
+    <!-- Thank You Dialog -->
+    <q-dialog v-model="showThankYouDialog" persistent>
+      <q-card class="thank-you-dialog">
+        <q-card-section class="dialog-header text-center">
+          <div class="text-h4 text-weight-bold text-primary">Thank You!</div>
+          <q-btn icon="close" flat round dense v-close-popup class="close-btn" />
+        </q-card-section>
+
+        <q-card-section class="dialog-content text-center">
+          <div class="heart-container">
+            <q-icon name="favorite" color="primary" size="5rem" class="animated-heart" />
+            <div class="heart-glow"></div>
+          </div>
+          <p class="thank-you-message">
+            Thank you for your generous donation!
+            <span class="highlight">Your support helps us continue our mission.</span>
+          </p>
+        </q-card-section>
+
+        <q-card-actions align="center" class="dialog-actions">
+          <q-btn
+            color="primary"
+            label="Go to Home"
+            @click="goToHome"
+            v-close-popup
+            class="home-button"
+            unelevated
+          >
+            <template v-slot:prepend>
+              <q-icon name="home" />
+            </template>
+          </q-btn>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <div class="row q-col-gutter-md">
       <!-- Left Side - Billing Info -->
       <div class="col-12 col-md-8">
@@ -81,7 +118,7 @@
             <div class="col-12">
               <div class="row justify-between">
                 <span>{{ type === 'donation' ? 'Donation Amount' : 'Plan Upgrade Amount' }}</span>
-                <span>${{ amount }}</span>
+                <span>EGP {{ amount }}</span>
               </div>
               <div class="row justify-between">
                 <span>Processing Fee</span>
@@ -89,7 +126,7 @@
               </div>
               <div class="row justify-between text-weight-bold q-mb-lg">
                 <span>Total Amount</span>
-                <span>${{ amount }}</span>
+                <span>EGP {{ amount }}</span>
               </div>
             </div>
 
@@ -151,6 +188,11 @@ export default {
   setup(props) {
     const router = useRouter()
     const toastRef = ref(null)
+    const showThankYouDialog = ref(false)
+
+    const goToHome = () => {
+      router.push('/')
+    }
 
     const showToast = (message, type) => {
       if (toastRef.value) {
@@ -218,31 +260,33 @@ export default {
         }
 
         // Create payment record
+        const paymentData = {
+          user_id: user.id,
+          amount: props.amount,
+          payment_type: props.type,
+          payment_method: paymentMethod.value,
+          status: 'pending',
+          billing_info: {
+            first_name: firstName.value,
+            last_name: lastName.value,
+            company: companyName.value,
+            country: country.value,
+            address: address.value,
+            apartment: apartment.value,
+            city: city.value,
+            state: state.value,
+            postcode: postcode.value,
+            email: email.value,
+            phone: phone.value,
+            notes: notes.value,
+          },
+        }
+
+        console.log('Creating payment with data:', paymentData)
+
         const { data: payment, error: paymentError } = await supabase
           .from('payments')
-          .insert([
-            {
-              user_id: user.id,
-              amount: props.amount,
-              payment_type: props.type,
-              payment_method: paymentMethod.value,
-              status: 'pending',
-              billing_info: {
-                first_name: firstName.value,
-                last_name: lastName.value,
-                company: companyName.value,
-                country: country.value,
-                address: address.value,
-                apartment: apartment.value,
-                city: city.value,
-                state: state.value,
-                postcode: postcode.value,
-                email: email.value,
-                phone: phone.value,
-                notes: notes.value,
-              },
-            },
-          ])
+          .insert([paymentData])
           .select()
           .single()
 
@@ -299,17 +343,14 @@ export default {
               console.error('Plan update error:', planError)
               throw new Error('Failed to update user plan: ' + planError.message)
             }
+
+            showToast('Plan upgrade successful! Welcome to Pro!', 'success')
+            // Redirect to profile page only for plan upgrades
+            router.push('/ProfilePage')
+          } else {
+            // For donations, show the thank you dialog
+            showThankYouDialog.value = true
           }
-
-          showToast(
-            props.type === 'premium'
-              ? 'Plan upgrade successful! Welcome to Pro!'
-              : 'Thank you for your donation!',
-            'success',
-          )
-
-          // Redirect to profile page
-          router.push('/ProfilePage')
         }
       } catch (error) {
         console.error('Checkout error:', error)
@@ -339,6 +380,8 @@ export default {
       paymentOptions,
       handleCheckout,
       toastRef,
+      showThankYouDialog,
+      goToHome,
     }
   },
 }
@@ -402,5 +445,171 @@ export default {
   .cart-totals {
     padding: 20px;
   }
+}
+
+.thank-you-dialog {
+  min-width: 350px;
+  max-width: 500px;
+  border-radius: 24px;
+  overflow: hidden;
+  animation: dialogFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dialog-header {
+  background: white;
+  padding: 24px;
+  color: var(--q-primary);
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dialog-header .text-h4 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: #666;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+  color: var(--q-primary);
+}
+
+.dialog-content {
+  padding: 32px 24px;
+  position: relative;
+}
+
+.heart-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.animated-heart {
+  animation: heartBeat 1.5s ease-in-out infinite;
+  display: inline-block;
+  filter: drop-shadow(0 0 8px rgba(var(--q-primary-rgb), 0.3));
+}
+
+.heart-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(var(--q-primary-rgb), 0.2) 0%, transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+  border-radius: 50%;
+}
+
+.thank-you-message {
+  font-size: 1.2rem;
+  color: #2c3539;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 400px;
+  animation: messageFadeIn 0.5s ease-out 0.3s both;
+}
+
+.highlight {
+  color: var(--q-primary);
+  font-weight: 500;
+}
+
+.home-button {
+  min-width: 180px;
+  font-weight: 500;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  background: var(--q-primary);
+  color: white;
+}
+
+.home-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--q-primary-rgb), 0.3);
+}
+
+.home-button:active {
+  transform: translateY(0);
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.2);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.2);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes messageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog-actions {
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Add CSS variable for primary color RGB values */
+:root {
+  --q-primary-rgb: 25, 118, 210; /* Replace with your primary color RGB values */
 }
 </style>

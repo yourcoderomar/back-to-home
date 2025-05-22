@@ -142,9 +142,18 @@ export default {
           name: 'gender',
           label: 'Gender',
           type: 'select',
-          options: ['male', 'female'],
+          options: [
+            { label: 'Male', value: 'male' },
+            { label: 'Female', value: 'female' },
+          ],
           width: '40%',
           rules: [(val) => !!val || 'Gender is required'],
+          style: 'text-transform: capitalize;',
+          optionsDense: true,
+          optionsSelectedClass: 'text-primary',
+          emitValue: true,
+          mapOptions: true,
+          popupContentClass: 'gender-popup-width',
         },
         {
           name: 'last_seen_location',
@@ -193,109 +202,137 @@ export default {
       try {
         this.isLoading = true
         let imageUrl = null
-        console.log('📌 Form Data Received:', formData)
 
-        // ✅ Handle Image Upload to Supabase Storage
         if (formData.photo_url) {
           const file = formData.photo_url
-          console.log('📤 File to upload:', file)
 
-          // Check if file is a File object
           if (!(file instanceof File)) {
-            console.error('❌ Invalid file object:', file)
             this.$refs.toast.showToast('Invalid image file. Please try again.', 'error')
             this.isLoading = false
             return
           }
 
-          const fileExt = file.name.split('.').pop()
-          const fileName = `${Date.now()}.${fileExt}`
+          // First insert the report to get the report_id
+          const reportDataToInsert = {
+            report_type: formData.report_type,
+            reporter_name: formData.reporter_name,
+            reporter_contact: formData.reporter_contact,
+            report_status: 'open',
+            user_id: formData.user_id,
+            created_at: formData.created_at,
+          }
 
-          console.log('📤 Uploading file to Supabase at path:', fileName)
+          const { data: insertedReport, error: reportInsertError } = await supabase
+            .from('reports')
+            .insert([reportDataToInsert])
+            .select()
+
+          if (reportInsertError) {
+            this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+            this.isLoading = false
+            return
+          }
+
+          // Upload image with report_id and user_id in filename
+          const fileExt = file.name.split('.').pop()
+          const fileName = `report_${insertedReport[0].id}_user_${formData.user_id}.${fileExt}`
 
           const { error: uploadError } = await supabase.storage
             .from('missingimages')
             .upload(fileName, file)
 
           if (uploadError) {
-            console.error('❌ File upload error:', uploadError.message)
             this.$refs.toast.showToast('Failed to upload image. Please try again.', 'error')
             this.isLoading = false
             return
           }
 
-          // ✅ Retrieve public URL
           const {
             data: { publicUrl },
           } = supabase.storage.from('missingimages').getPublicUrl(fileName)
 
           if (!publicUrl) {
-            console.error('❌ Error retrieving image URL.')
             this.$refs.toast.showToast('Failed to process image. Please try again.', 'error')
             this.isLoading = false
             return
           }
 
           imageUrl = publicUrl
-          console.log('🌐 Image URL retrieved:', imageUrl)
-        }
 
-        // ✅ Step 1: Insert into `reports` (Supertype Table)
-        const reportDataToInsert = {
-          report_type: formData.report_type,
-          reporter_name: formData.reporter_name,
-          reporter_contact: formData.reporter_contact,
-          report_status: 'open',
-          user_id: formData.user_id,
-          created_at: formData.created_at,
-        }
+          // Insert into missing_reports
+          const missingReportData = {
+            missing_report_id: insertedReport[0].id,
+            missing_person_name: formData.missing_person_name,
+            age: formData.age,
+            gender: formData.gender,
+            last_seen_location: formData.last_seen_location,
+            last_seen_date: formData.last_seen_date,
+            description: formData.description,
+            photo_url: imageUrl,
+          }
 
-        console.log("📊 Inserting into 'reports' table:", reportDataToInsert)
+          const { error: missingReportInsertError } = await supabase
+            .from('missing_reports')
+            .insert([missingReportData])
 
-        const { data: insertedReport, error: reportInsertError } = await supabase
-          .from('reports')
-          .insert([reportDataToInsert])
-          .select()
+          if (missingReportInsertError) {
+            this.$refs.toast.showToast(
+              'Failed to submit report details. Please try again.',
+              'error',
+            )
+            this.isLoading = false
+            return
+          }
+        } else {
+          // If no image, proceed with normal report submission
+          const reportDataToInsert = {
+            report_type: formData.report_type,
+            reporter_name: formData.reporter_name,
+            reporter_contact: formData.reporter_contact,
+            report_status: 'open',
+            user_id: formData.user_id,
+            created_at: formData.created_at,
+          }
 
-        if (reportInsertError) {
-          console.error("❌ Error inserting into 'reports':", reportInsertError.message)
-          this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
-          this.isLoading = false
-          return
-        }
+          const { data: insertedReport, error: reportInsertError } = await supabase
+            .from('reports')
+            .insert([reportDataToInsert])
+            .select()
 
-        // ✅ Step 2: Insert into `missing_reports` (Subtype Table)
-        const missingReportData = {
-          missing_report_id: insertedReport[0].id,
-          missing_person_name: formData.missing_person_name,
-          age: formData.age,
-          gender: formData.gender,
-          last_seen_location: formData.last_seen_location,
-          last_seen_date: formData.last_seen_date,
-          description: formData.description,
-          photo_url: imageUrl || null,
-        }
+          if (reportInsertError) {
+            this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
+            this.isLoading = false
+            return
+          }
 
-        console.log("📊 Inserting into 'missing_reports' table:", missingReportData)
+          const missingReportData = {
+            missing_report_id: insertedReport[0].id,
+            missing_person_name: formData.missing_person_name,
+            age: formData.age,
+            gender: formData.gender,
+            last_seen_location: formData.last_seen_location,
+            last_seen_date: formData.last_seen_date,
+            description: formData.description,
+            photo_url: null,
+          }
 
-        const { error: missingReportInsertError } = await supabase
-          .from('missing_reports')
-          .insert([missingReportData])
+          const { error: missingReportInsertError } = await supabase
+            .from('missing_reports')
+            .insert([missingReportData])
 
-        if (missingReportInsertError) {
-          console.error(
-            "❌ Error inserting into 'missing_reports':",
-            missingReportInsertError.message,
-          )
-          this.$refs.toast.showToast('Failed to submit report details. Please try again.', 'error')
-          this.isLoading = false
-          return
+          if (missingReportInsertError) {
+            this.$refs.toast.showToast(
+              'Failed to submit report details. Please try again.',
+              'error',
+            )
+            this.isLoading = false
+            return
+          }
         }
 
         this.$refs.toast.showToast('Report submitted successfully!', 'success')
-        this.showForm = false // Close form after submission
-      } catch (error) {
-        console.error('Error submitting report:', error)
+        this.showForm = false
+      } catch {
         this.$refs.toast.showToast('Failed to submit report. Please try again.', 'error')
       } finally {
         this.isLoading = false
@@ -425,5 +462,21 @@ export default {
   .q-btn {
     font-size: 3.5vw;
   }
+}
+
+/* Add these new styles */
+:deep(.gender-select) {
+  width: 100%;
+}
+
+:deep(.gender-menu) {
+  min-width: 100px !important;
+  max-width: 200px !important;
+}
+
+:deep(.gender-popup-width) {
+  min-width: 120px !important;
+  max-width: 220px !important;
+  width: 180px !important;
 }
 </style>

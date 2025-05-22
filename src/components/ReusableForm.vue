@@ -54,6 +54,7 @@
               v-model="formData[field.name]"
               :label="field.label"
               :options="field.options || []"
+              :popup-content-class="field.popupContentClass"
               filled
               dense
               hide-bottom-space

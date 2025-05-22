@@ -84,6 +84,11 @@ const routes = [
       requiresAuth: true,
     },
   },
+  {
+    path: '/contact-us',
+    name: 'ContactUs',
+    component: () => import('pages/ContactUs.vue'),
+  },
 
   {
     path: '/admin',

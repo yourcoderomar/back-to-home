@@ -1,25 +1,25 @@
 <template>
   <q-page-container class="donation-page">
     <NavBar />
-    
+
     <div class="donation-container">
-      <HeroSection 
-        title="Support Our Mission" 
-        subtitle="Your donation helps us reunite more families and find missing loved ones" 
+      <HeroSection
+        title="Support Our Mission"
+        subtitle="Your donation helps us reunite more families and find missing loved ones"
       />
 
       <div class="donation-form">
         <h2 class="section-title">Choose a donation amount</h2>
-        
+
         <div class="amount-options">
-          <div 
-            v-for="amount in donationAmounts" 
+          <div
+            v-for="amount in donationAmounts"
             :key="amount.value"
             class="amount-option"
-            :class="{ 'selected': selectedAmount === amount.value }"
+            :class="{ selected: selectedAmount === amount.value }"
             @click="selectedAmount = amount.value"
           >
-            <div class="amount">${{ amount.value }}</div>
+            <div class="amount">EGP{{ amount.value }}</div>
             <div class="description">{{ amount.description }}</div>
           </div>
 
@@ -27,16 +27,16 @@
             <q-input
               v-model="customAmount"
               label="Enter custom amount"
-              prefix="$"
+              prefix="EGP"
               type="number"
-              :rules="[val => val > 0 || 'Please enter a valid amount']"
+              :rules="[(val) => val > 0 || 'Please enter a valid amount']"
               @update:model-value="selectedAmount = Number(customAmount)"
             />
           </div>
         </div>
 
         <h2 class="section-title q-mt-xl">Choose a donation frequency</h2>
-        
+
         <div class="frequency-options">
           <q-btn-toggle
             v-model="frequency"
@@ -45,26 +45,21 @@
             rounded
             unelevated
             :options="[
-              {label: 'Monthly', value: 'monthly'},
-              {label: 'One time', value: 'one-time'}
+              { label: 'Monthly', value: 'monthly' },
+              { label: 'One time', value: 'one-time' },
             ]"
           />
         </div>
 
         <div class="donation-summary q-mt-lg">
           <p class="text-h6">
-            You selected: ${{ selectedAmount }} {{ frequency === 'monthly' ? 'monthly' : 'one-time' }} donation
+            You selected: EGP{{ selectedAmount }}
+            {{ frequency === 'monthly' ? 'monthly' : 'one-time' }} donation
           </p>
         </div>
 
         <div class="action-buttons">
-          <q-btn
-            label="Cancel"
-            flat
-            color="grey"
-            class="q-mr-md"
-            @click="$router.go(-1)"
-          />
+          <q-btn label="Cancel" flat color="grey" class="q-mr-md" @click="$router.go(-1)" />
           <q-btn
             label="Proceed to Checkout"
             color="primary"
@@ -82,59 +77,59 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import NavBar from 'src/components/NavBar.vue';
-import FooterComponent from 'src/components/Footer.vue';
-import HeroSection from 'src/components/HeroSection.vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue'
+import NavBar from 'src/components/NavBar.vue'
+import FooterComponent from 'src/components/Footer.vue'
+import HeroSection from 'src/components/HeroSection.vue'
+import { useRouter } from 'vue-router'
 
 export default {
   name: 'DonationPage',
   components: {
     NavBar,
     FooterComponent,
-    HeroSection
+    HeroSection,
   },
   setup() {
-    const selectedAmount = ref(10);
-    const customAmount = ref('');
-    const frequency = ref('monthly');
-    const router = useRouter();
+    const selectedAmount = ref(10)
+    const customAmount = ref('')
+    const frequency = ref('monthly')
+    const router = useRouter()
 
     const donationAmounts = [
-      { 
-        value: 10, 
-        description: 'Help us maintain our search database and infrastructure' 
+      {
+        value: 50,
+        description: 'Help us maintain our search database and infrastructure',
       },
-      { 
-        value: 25, 
-        description: 'Support our outreach programs and awareness campaigns' 
+      {
+        value: 100,
+        description: 'Support our outreach programs and awareness campaigns',
       },
-      { 
-        value: 50, 
-        description: 'Enable us to expand our search capabilities and reach' 
-      }
-    ];
+      {
+        value: 200,
+        description: 'Enable us to expand our search capabilities and reach',
+      },
+    ]
 
     const proceedToCheckout = () => {
       router.push({
         name: 'Checkout',
         query: {
           amount: selectedAmount.value,
-          type: 'donation'
-        }
-      });
-    };
+          type: 'donation',
+        },
+      })
+    }
 
     return {
       selectedAmount,
       customAmount,
       frequency,
       donationAmounts,
-      proceedToCheckout
-    };
-  }
-};
+      proceedToCheckout,
+    }
+  },
+}
 </script>
 
 <style scoped>
@@ -155,13 +150,13 @@ export default {
   padding: 40px;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .section-title {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2C3539;
+  color: #2c3539;
   margin-bottom: 30px;
   text-align: center;
 }
@@ -188,7 +183,7 @@ export default {
 
 .amount-option.selected {
   border-color: #00bfff;
-  background: rgba(0,191,255,0.05);
+  background: rgba(0, 191, 255, 0.05);
 }
 
 .amount {
@@ -251,4 +246,4 @@ export default {
     width: 100%;
   }
 }
-</style> 
+</style>

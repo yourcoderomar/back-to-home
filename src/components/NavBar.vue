@@ -217,13 +217,13 @@ export default {
     const fetchUserPlan = async (userId) => {
       try {
         const { data, error } = await supabase
-          .from('user_subscriptions')
-          .select('plan_type')
+          .from('users')
+          .select('user_plan')
           .eq('user_id', userId)
           .single()
 
         if (error) throw error
-        userPlan.value = data?.plan_type
+        userPlan.value = data?.user_plan
       } catch (error) {
         console.error('Error fetching user plan:', error)
         userPlan.value = null
@@ -252,7 +252,7 @@ export default {
     const goToSignIn = () => router.push('/SignIn')
     const goToSignUp = () => router.push('/SignUp')
     const goToSavedReports = () => {
-      if (user.value && userPlan.value === 'pro') {
+      if (user.value && userPlan.value === 2) {
         router.push('/saved-reports')
       } else {
         router.push('/OurPlans')

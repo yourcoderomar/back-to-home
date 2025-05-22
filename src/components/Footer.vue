@@ -25,6 +25,9 @@
           <p><i class="fas fa-envelope"></i> back2home@gmail.com</p>
           <p><i class="fas fa-phone"></i> 01155306633</p>
           <p><i class="fas fa-map-marker-alt"></i> Cairo, Egypt</p>
+          <router-link to="/contact-us"
+            ><p><i class="fas fa-phone-alt"></i> Contact Us</p></router-link
+          >
         </div>
       </div>
 
