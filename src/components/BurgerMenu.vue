@@ -28,16 +28,18 @@
         </div>
       </li>
       <ul class="burger-menu">
-        <li><router-link to="/ReportMissing">Report a Missing Person</router-link></li>
-        <li><router-link to="/SearchMissing">Search for a Missing Person</router-link></li>
-        <li><router-link to="/SearchReports">Search Reports</router-link></li>
-
-        <li>
-          <router-link to="/donation">Donate</router-link>
+        <li><router-link to="/ReportMissing">Report</router-link></li>
+        <li><router-link to="/SearchMissing">Find</router-link></li>
+        <li><router-link to="/SearchReports">Browse</router-link></li>
+        <li v-if="userPlan === 2">
+          <router-link to="/matched-reports">Matches</router-link>
         </li>
-        <li><router-link to="/OurPlans">Our Plans</router-link></li>
-        <li><router-link to="/AboutUs">About Us</router-link></li>
-        <li><router-link to="/Contact">Contact Us</router-link></li>
+        <li>
+          <router-link to="/donation">Support</router-link>
+        </li>
+        <li><router-link to="/OurPlans">Subscriptions</router-link></li>
+        <li><router-link to="/AboutUs">About</router-link></li>
+        <li><router-link to="/contact-us">Contact Us</router-link></li>
       </ul>
     </ul>
   </div>
@@ -46,18 +48,24 @@
 <script>
 export default {
   name: 'BurgerMenu',
+  props: {
+    userPlan: {
+      type: [Number, String],
+      default: null,
+    },
+  },
   data() {
     return {
       isVisible: false,
       searchQuery: '',
       filteredPages: [],
       availablePages: [
-        { name: 'About Us', path: '/AboutUs', icon: 'info' },
-        { name: 'Plans', path: '/OurPlans', icon: 'card_membership' },
-        { name: 'Report Missing', path: '/ReportMissing', icon: 'report' },
-        { name: 'Search Missing', path: '/SearchMissing', icon: 'search' },
-        { name: 'Reports', path: '/SearchReports', icon: 'description' },
-        { name: 'Donate', path: '/donate', icon: 'monetization_on' },
+        { name: 'About', path: '/AboutUs', icon: 'info' },
+        { name: 'Subscriptions', path: '/OurPlans', icon: 'card_membership' },
+        { name: 'Report', path: '/ReportMissing', icon: 'report' },
+        { name: 'Find', path: '/SearchMissing', icon: 'search' },
+        { name: 'Browse', path: '/SearchReports', icon: 'description' },
+        { name: 'Support', path: '/donate', icon: 'volunteer_activism' },
         { name: 'Profile', path: '/ProfilePage', icon: 'person' },
         { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
         { name: 'Security', path: '/Security', icon: 'security' },

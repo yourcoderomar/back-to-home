@@ -49,9 +49,38 @@ export default defineConfig((/* ctx */) => {
       // env: {},
       // rawDefine: {}
       // ignorePublicFolder: true,
-      // minify: false,
-      // polyfillModulePreload: true,
-      // distDir
+
+      // Enable code splitting
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['vue', 'vue-router'],
+            quasar: ['quasar'],
+            supabase: ['@supabase/supabase-js'],
+            charts: ['chart.js', 'vue-chartjs'],
+            animations: ['gsap', 'aos'],
+          },
+        },
+      },
+
+      // Enable tree shaking
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
+
+      // Enable compression
+      brotli: true,
+      gzip: true,
+
+      // Optimize chunk size
+      chunkSizeWarningLimit: 1000,
+
+      // Enable source maps only in development
+      sourcemap: process.env.NODE_ENV === 'development',
 
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},

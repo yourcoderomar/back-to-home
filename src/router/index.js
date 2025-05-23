@@ -8,6 +8,10 @@ import {
 import { supabase } from 'src/boot/supabase'
 import routes from './routes'
 
+// Cache for admin status to reduce database queries
+const adminCache = new Map()
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 export default defineRouter(function () {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
@@ -16,42 +20,61 @@ export default defineRouter(function () {
       : createWebHashHistory
 
   const Router = createRouter({
-    scrollBehavior: () => ({ left: 0, top: 0 }),
+    scrollBehavior: (to, from, savedPosition) => {
+      if (savedPosition) {
+        return savedPosition
+      }
+      if (to.hash) {
+        return { el: to.hash, behavior: 'smooth' }
+      }
+      return { left: 0, top: 0, behavior: 'smooth' }
+    },
     routes,
     history: createHistory(process.env.VUE_ROUTER_BASE),
   })
 
-  Router.beforeEach(async (to, from, next) => {
+  // Debounce function to prevent multiple rapid checks
+  const debounce = (fn, delay) => {
+    let timeoutId
+    return (...args) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => fn(...args), delay)
+    }
+  }
+
+  // Check admin status with caching
+  const checkAdminStatus = async (userId) => {
+    const cached = adminCache.get(userId)
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.isAdmin
+    }
+
     try {
-      // Fetch the latest session
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      const isAdmin = !!adminData
+      adminCache.set(userId, { isAdmin, timestamp: Date.now() })
+      return isAdmin
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+      return false
+    }
+  }
+
+  // Debounced navigation guard
+  const debouncedGuard = debounce(async (to, from, next) => {
+    try {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-
-      // Get the authenticated user
       const { data: userData } = await supabase.auth.getUser()
       const user = userData?.user || null
-
-      // Ensure that we detect logout correctly
       const isAuthenticated = session && user
 
-      // Check if user is admin
-      let isAdmin = false
-      if (isAuthenticated) {
-        try {
-          const { data: adminData } = await supabase
-            .from('admins')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle()
-
-          isAdmin = !!adminData
-        } catch (error) {
-          console.error('Error checking admin status:', error)
-        }
-      }
-
-      // 🔒 Redirect guests trying to access protected pages
       if (!isAuthenticated && to.meta.requiresAuth) {
         return next({
           path: '/signin',
@@ -59,12 +82,13 @@ export default defineRouter(function () {
         })
       }
 
-      // 🚫 Redirect non-admin users trying to access admin pages
-      if (to.meta.requiresAdmin && !isAdmin) {
-        return next('/')
+      if (to.meta.requiresAdmin) {
+        const isAdmin = await checkAdminStatus(user?.id)
+        if (!isAdmin) {
+          return next('/')
+        }
       }
 
-      // 🚀 Redirect logged-in users away from guest-only pages
       if (isAuthenticated && to.meta.requiresGuest) {
         return next('/')
       }
@@ -74,6 +98,14 @@ export default defineRouter(function () {
       console.error('Navigation error:', error)
       next('/')
     }
+  }, 100)
+
+  Router.beforeEach((to, from, next) => {
+    // Skip navigation guard for static routes
+    if (!to.meta.requiresAuth && !to.meta.requiresAdmin && !to.meta.requiresGuest) {
+      return next()
+    }
+    debouncedGuard(to, from, next)
   })
 
   return Router

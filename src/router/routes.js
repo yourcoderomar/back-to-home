@@ -1,19 +1,47 @@
+// Define route chunks for better code splitting
+const routeChunks = {
+  auth: () => import('pages/SignIn.vue'),
+  profile: () => import('pages/ProfilePage.vue'),
+  admin: () => import('layouts/AdminLayout.vue'),
+  public: () => import('pages/IndexPage.vue'),
+  reports: () => import('pages/ReportMissing.vue'),
+  search: () => import('pages/SearchMissing.vue'),
+  settings: () => import('pages/AccountSettings.vue'),
+  plans: () => import('pages/OurPlans.vue'),
+  donation: () => import('pages/DonationPage.vue'),
+  error: () => import('pages/ErrorNotFound.vue'),
+  matched: () => import('pages/MatchedReports.vue'),
+}
+
+// Helper function for lazy loading with loading state
+const lazyLoad = (component) => ({
+  component: component,
+  loading: {
+    template: '<div class="loading-container"><q-spinner-dots color="primary" size="40px" /></div>',
+  },
+  error: {
+    template: '<div class="error-container">Failed to load component</div>',
+  },
+  delay: 200,
+  timeout: 5000,
+})
+
 const routes = [
   {
     path: '/',
-    component: () => import('pages/IndexPage.vue'), // Optional: Keep IndexPage.vue if needed
+    ...lazyLoad(routeChunks.public),
   },
   {
     path: '/OurPlans',
-    component: () => import('pages/OurPlans.vue'),
+    ...lazyLoad(routeChunks.plans),
   },
   {
     path: '/ReportMissing',
-    component: () => import('pages/ReportMissing.vue'),
+    ...lazyLoad(routeChunks.reports),
   },
   {
     path: '/SearchMissing',
-    component: () => import('pages/SearchMissing.vue'),
+    ...lazyLoad(routeChunks.search),
     meta: { requiresAuth: true },
   },
   {
@@ -24,19 +52,18 @@ const routes = [
     path: '/SignUp',
     component: () => import('pages/SignUp.vue'),
   },
-
   {
     path: '/CompleteProfile',
     component: () => import('pages/CompleteProfile.vue'),
   },
   {
     path: '/SignIn',
-    component: () => import('pages/SignIn.vue'),
+    ...lazyLoad(routeChunks.auth),
     meta: { requiresGuest: true },
   },
   {
     path: '/ProfilePage',
-    component: () => import('pages/ProfilePage.vue'),
+    ...lazyLoad(routeChunks.profile),
     meta: { requiresAuth: true },
   },
   {
@@ -47,7 +74,7 @@ const routes = [
   {
     path: '/AccountSettings',
     name: 'AccountSettings',
-    component: () => import('pages/AccountSettings.vue'),
+    ...lazyLoad(routeChunks.settings),
   },
   {
     path: '/MyPlan',
@@ -68,7 +95,7 @@ const routes = [
   {
     path: '/donate',
     name: 'Donate',
-    component: () => import('pages/DonationPage.vue'),
+    ...lazyLoad(routeChunks.donation),
   },
   {
     path: '/checkout',
@@ -80,19 +107,16 @@ const routes = [
     path: '/saved-reports',
     name: 'SavedReports',
     component: () => import('pages/SavedReports.vue'),
-    meta: {
-      requiresAuth: true,
-    },
+    meta: { requiresAuth: true },
   },
   {
     path: '/contact-us',
     name: 'ContactUs',
     component: () => import('pages/ContactUs.vue'),
   },
-
   {
     path: '/admin',
-    component: () => import('layouts/AdminLayout.vue'),
+    ...lazyLoad(routeChunks.admin),
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
@@ -113,12 +137,15 @@ const routes = [
       },
     ],
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
+  {
+    path: '/matched-reports',
+    name: 'MatchedReports',
+    ...lazyLoad(routeChunks.matched),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
+    ...lazyLoad(routeChunks.error),
   },
 ]
 

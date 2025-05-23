@@ -3,7 +3,7 @@
     <!-- Video Background -->
     <div class="video-wrapper">
       <video autoplay muted loop playsinline>
-        <source src="/images/bg2-video.mp4" type="video/mp4" />
+        <source src="/images/bg2-video.webm" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>

@@ -3,7 +3,16 @@
     <header :class="['navbar', { 'transparent-nav': isTransparent }, navbarClass]">
       <!-- Logo -->
       <router-link to="/" class="logo-link">
-        <img src="/images/logo.png" alt="Logo" class="logo" />
+        <img
+          src="/images/logo.webp"
+          alt="Back2Home Logo"
+          class="logo"
+          width="150"
+          height="50"
+          loading="eager"
+          fetchpriority="high"
+          decoding="sync"
+        />
       </router-link>
 
       <!-- Navigation Buttons -->
@@ -34,16 +43,27 @@
               <div v-else class="no-results">No results found</div>
             </div>
           </div>
-          <router-link to="/AboutUs" class="nav-link">About us</router-link>
-          <router-link to="/OurPlans" class="nav-link">Plans</router-link>
-          <router-link to="/ReportMissing" class="nav-link">Report</router-link>
-          <router-link to="/SearchMissing" class="nav-link">Search</router-link>
-          <router-link to="/SearchReports" class="nav-link">Reports</router-link>
+          <router-link to="/AboutUs" class="nav-link"> <q-icon name="info" /> About </router-link>
+          <router-link to="/OurPlans" class="nav-link">
+            <q-icon name="card_membership" /> Subscriptions
+          </router-link>
+          <router-link to="/ReportMissing" class="nav-link">
+            <q-icon name="report" /> Report
+          </router-link>
+          <router-link to="/SearchMissing" class="nav-link">
+            <q-icon name="search" /> Find
+          </router-link>
+          <router-link to="/SearchReports" class="nav-link">
+            <q-icon name="description" /> Browse
+          </router-link>
+          <router-link v-if="userPlan === 2" to="/MatchedReports" class="nav-link">
+            <q-icon name="compare_arrows" /> Matches
+          </router-link>
           <router-link v-if="isAdmin" to="/admin" class="nav-link admin-link">
             <q-icon name="admin_panel_settings" /> Admin
           </router-link>
           <router-link to="/donate" class="donate-btn">
-            <q-icon name="monetization_on" /> Donate
+            <q-icon name="volunteer_activism" /> Support
           </router-link>
         </div>
       </nav>
@@ -68,8 +88,8 @@
             </q-item>
             <q-item clickable v-close-popup @click="goToSavedReports">
               <q-item-section avatar>
-                <q-icon name="bookmark" :color="userPlan === 'pro' ? 'primary' : 'grey'">
-                  <q-tooltip v-if="userPlan !== 'pro'" class="bg-grey-8">
+                <q-icon name="bookmark" :color="userPlan === 2 ? 'primary' : 'grey'">
+                  <q-tooltip v-if="userPlan !== 2" class="bg-grey-8">
                     Upgrade to Pro plan to save reports
                   </q-tooltip>
                 </q-icon>
@@ -119,7 +139,7 @@
           <div></div>
         </div>
 
-        <BurgerMenu ref="burgerMenu" @menuToggled="isMenuOpen = $event" />
+        <BurgerMenu ref="burgerMenu" @menuToggled="isMenuOpen = $event" :userPlan="userPlan" />
       </div>
     </header>
   </div>
@@ -162,12 +182,13 @@ export default {
 
     // Define available pages for search
     const availablePages = [
-      { name: 'About Us', path: '/AboutUs', icon: 'info' },
-      { name: 'Plans', path: '/OurPlans', icon: 'card_membership' },
-      { name: 'Report Missing', path: '/ReportMissing', icon: 'report' },
-      { name: 'Search Missing', path: '/SearchMissing', icon: 'search' },
-      { name: 'Reports', path: '/SearchReports', icon: 'description' },
-      { name: 'Donate', path: '/donate', icon: 'monetization_on' },
+      { name: 'About', path: '/AboutUs', icon: 'info' },
+      { name: 'Subscriptions', path: '/OurPlans', icon: 'card_membership' },
+      { name: 'Report', path: '/ReportMissing', icon: 'report' },
+      { name: 'Find', path: '/SearchMissing', icon: 'search' },
+      { name: 'Browse', path: '/SearchReports', icon: 'description' },
+      { name: 'Matches', path: '/MatchedReports', icon: 'compare_arrows' },
+      { name: 'Support', path: '/donate', icon: 'volunteer_activism' },
       { name: 'Profile', path: '/ProfilePage', icon: 'person' },
       { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
       { name: 'Security', path: '/Security', icon: 'security' },
@@ -358,12 +379,17 @@ $gray: rgb(90, 90, 90);
 .logo-link {
   display: flex;
   align-items: center;
+  text-decoration: none;
   margin: 10px;
 }
 
 .logo {
   height: 50px;
   width: auto;
+  object-fit: contain;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .nav-buttons {

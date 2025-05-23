@@ -188,7 +188,7 @@ export default {
           const { data, error } = await supabase
             .from('missing_reports')
             .select(
-              'missing_person_name, age, gender, last_seen_location, last_seen_date, description',
+              'missing_person_name, age, gender, last_seen_location, last_seen_date, description, photo_url',
             )
             .eq('missing_report_id', id)
             .single()
@@ -198,7 +198,7 @@ export default {
           const { data, error } = await supabase
             .from('found_reports')
             .select(
-              'found_person_name, age_estimate, gender, found_location, found_date, description',
+              'found_person_name, age_estimate, gender, found_location, found_date, description, photo_url',
             )
             .eq('found_report_id', id)
             .single()
@@ -215,6 +215,11 @@ export default {
           ...reportData,
           ...(detailsData || {}),
         }
+
+        // Set the image URL from the details data if not provided in the route
+        if (!imageUrl.value && detailsData?.photo_url) {
+          imageUrl.value = detailsData.photo_url
+        }
       } catch (error) {
         console.error('Error fetching report details:', error)
       } finally {
@@ -226,69 +231,32 @@ export default {
       if (report.value?.reporter_contact) {
         window.location.href = `tel:${report.value.reporter_contact}`
       } else {
-        toast.value.show('No contact number available', 'warning')
-      }
-    }
-
-    const toggleSaveReport = async () => {
-      if (!isProUser.value) {
-        toast.value.show('This feature is only available for Pro users', 'warning')
-        return
-      }
-
-      try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
-        if (authError || !user) throw authError
-
-        if (!isSaved.value) {
-          // Save the report
-          const { error } = await supabase.from('saved_reports').insert([
-            {
-              user_id: user.id,
-              report_id: reportId.value,
-              report_type: report.value.missing_person_name ? 'missing' : 'found',
-              created_at: new Date().toISOString(),
-            },
-          ])
-
-          if (error) throw error
-
-          isSaved.value = true
-          toast.value.show('Report saved successfully!', 'success')
-        } else {
-          // Unsave the report
-          const { error } = await supabase.from('saved_reports').delete().match({
-            report_id: reportId.value,
-            user_id: user.id,
-          })
-
-          if (error) throw error
-
-          isSaved.value = false
-          toast.value.show('Report removed from saved', 'success')
-        }
-      } catch (error) {
-        console.error('Error toggling save status:', error)
-        toast.value.show('Failed to update save status', 'error')
+        toast.value.showToast('No contact number available', 'warning')
       }
     }
 
     const checkIfSaved = async () => {
       try {
+        // Wait for report data to be available
+        if (!report.value) {
+          console.log('Report data not yet available')
+          return
+        }
+
         const {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) return
 
+        // Use the report ID from the route params
+        const reportIdToCheck = reportId.value
+
         const { data, error } = await supabase
           .from('saved_reports')
           .select('*')
           .match({
-            report_id: reportId.value,
+            report_id: reportIdToCheck,
             user_id: user.id,
           })
           .single()
@@ -300,10 +268,65 @@ export default {
       }
     }
 
-    onMounted(() => {
-      fetchReportDetails(reportId.value)
-      checkUserPlan()
-      checkIfSaved()
+    const toggleSaveReport = async () => {
+      if (!isProUser.value) {
+        toast.value.showToast('This feature is only available for Pro users', 'warning')
+        return
+      }
+
+      try {
+        // Wait for report data to be available
+        if (!report.value) {
+          toast.value.showToast('Report data not yet available', 'error')
+          return
+        }
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError || !user) throw authError
+
+        // Use the report ID from the route params
+        const reportIdToSave = reportId.value
+
+        if (!isSaved.value) {
+          // Save the report
+          const { error } = await supabase.from('saved_reports').insert([
+            {
+              user_id: user.id,
+              report_id: reportIdToSave,
+              report_type: report.value.missing_person_name ? 'missing' : 'found',
+              created_at: new Date().toISOString(),
+            },
+          ])
+
+          if (error) throw error
+
+          isSaved.value = true
+          toast.value.showToast('Report saved successfully!', 'success')
+        } else {
+          // Unsave the report
+          const { error } = await supabase.from('saved_reports').delete().match({
+            report_id: reportIdToSave,
+            user_id: user.id,
+          })
+
+          if (error) throw error
+
+          isSaved.value = false
+          toast.value.showToast('Report removed from saved', 'success')
+        }
+      } catch (error) {
+        console.error('Error toggling save status:', error)
+        toast.value.showToast('Failed to update save status', 'error')
+      }
+    }
+
+    onMounted(async () => {
+      await fetchReportDetails(reportId.value)
+      await checkUserPlan()
+      await checkIfSaved()
     })
 
     const formatDate = (date) => {

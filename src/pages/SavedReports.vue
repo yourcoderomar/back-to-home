@@ -160,8 +160,12 @@ export default {
 
         if (savedError) throw savedError
 
+        console.log('Saved reports data:', savedData)
+
         // Then, get the full report details for each saved report
         const reportIds = savedData.map((item) => item.report_id)
+        console.log('Report IDs to fetch:', reportIds)
+
         const { data: reportsData, error: reportsError } = await supabase
           .from('reports')
           .select(
@@ -196,16 +200,25 @@ export default {
 
         if (reportsError) throw reportsError
 
+        console.log('Fetched reports data:', reportsData)
+
         // Transform and combine the data
-        savedReports.value = reportsData.map((report) => ({
-          ...report,
-          ...(report.missing_reports || {}),
-          ...(report.found_reports || {}),
-          saved_at: savedData.find((item) => item.report_id === report.id)?.created_at,
-        }))
+        savedReports.value = reportsData.map((report) => {
+          const savedReport = savedData.find((item) => item.report_id === report.id)
+          console.log('Matching saved report:', savedReport, 'for report:', report.id)
+
+          return {
+            ...report,
+            ...(report.missing_reports || {}),
+            ...(report.found_reports || {}),
+            saved_at: savedReport?.created_at,
+          }
+        })
+
+        console.log('Final saved reports:', savedReports.value)
       } catch (error) {
         console.error('Error fetching saved reports:', error)
-        toast.value.show('Failed to load saved reports', 'error')
+        toast.value.showToast('Failed to load saved reports', 'error')
       } finally {
         loading.value = false
       }
@@ -247,9 +260,15 @@ export default {
 
     const viewReport = (report) => {
       console.log('Card clicked:', report.id)
+      // Get the correct photo URL based on report type
+      const photoUrl =
+        report.report_type === 'missing'
+          ? report.missing_reports?.photo_url
+          : report.found_reports?.photo_url
+
       router.push({
         path: `/ReportDetails/${report.id}`,
-        query: { imageUrl: report.photo_url },
+        query: { imageUrl: photoUrl },
       })
     }
 
@@ -269,20 +288,23 @@ export default {
         } = await supabase.auth.getUser()
         if (authError || !user) throw authError
 
-        const { error } = await supabase.from('saved_reports').delete().match({
-          report_id: report.id,
-          user_id: user.id,
-        })
+        const { error } = await supabase
+          .from('saved_reports')
+          .delete()
+          .match({
+            report_id: parseInt(report.id),
+            user_id: user.id,
+          })
 
         if (error) throw error
 
         // Remove from local array
         savedReports.value = savedReports.value.filter((r) => r.id !== report.id)
 
-        toast.value.show('Report removed from saved', 'success')
+        toast.value.showToast('Report removed from saved', 'success')
       } catch (error) {
         console.error('Error unsaving report:', error)
-        toast.value.show('Failed to remove report from saved', 'error')
+        toast.value.showToast('Failed to remove report from saved', 'error')
       }
     }
 
