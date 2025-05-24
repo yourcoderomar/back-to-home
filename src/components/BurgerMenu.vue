@@ -35,7 +35,7 @@
           <router-link to="/matched-reports">Matches</router-link>
         </li>
         <li>
-          <router-link to="/donation">Support</router-link>
+          <router-link to="/donate">Support</router-link>
         </li>
         <li><router-link to="/OurPlans">Subscriptions</router-link></li>
         <li><router-link to="/AboutUs">About</router-link></li>
@@ -65,6 +65,7 @@ export default {
         { name: 'Report', path: '/ReportMissing', icon: 'report' },
         { name: 'Find', path: '/SearchMissing', icon: 'search' },
         { name: 'Browse', path: '/SearchReports', icon: 'description' },
+        { name: 'Matches', path: '/matched-reports', icon: 'compare_arrows' },
         { name: 'Support', path: '/donate', icon: 'volunteer_activism' },
         { name: 'Profile', path: '/ProfilePage', icon: 'person' },
         { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },

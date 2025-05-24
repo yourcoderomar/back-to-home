@@ -4,7 +4,7 @@
       <!-- Logo -->
       <router-link to="/" class="logo-link">
         <img
-          src="/images/logo.webp"
+          :src="isTransparent ? '/images/white-logo.png' : '/images/logo.webp'"
           alt="Back2Home Logo"
           class="logo"
           width="150"
@@ -56,7 +56,7 @@
           <router-link to="/SearchReports" class="nav-link">
             <q-icon name="description" /> Browse
           </router-link>
-          <router-link v-if="userPlan === 2" to="/MatchedReports" class="nav-link">
+          <router-link v-if="userPlan === 2" to="/matched-reports" class="nav-link">
             <q-icon name="compare_arrows" /> Matches
           </router-link>
           <router-link v-if="isAdmin" to="/admin" class="nav-link admin-link">
@@ -109,7 +109,11 @@
         <!-- Sign In / Sign Up Dropdown -->
         <q-btn-dropdown v-else flat round dense class="icon-btn auth-dropdown">
           <template v-slot:label>
-            <q-icon name="person" size="32px" style="color: #2c3539" />
+            <q-icon
+              name="person"
+              size="32px"
+              :style="{ color: isTransparent ? 'white' : '#2c3539' }"
+            />
           </template>
           <q-list>
             <q-item clickable v-close-popup @click="goToSignIn">
@@ -187,7 +191,7 @@ export default {
       { name: 'Report', path: '/ReportMissing', icon: 'report' },
       { name: 'Find', path: '/SearchMissing', icon: 'search' },
       { name: 'Browse', path: '/SearchReports', icon: 'description' },
-      { name: 'Matches', path: '/MatchedReports', icon: 'compare_arrows' },
+      { name: 'Matches', path: '/matched-reports', icon: 'compare_arrows' },
       { name: 'Support', path: '/donate', icon: 'volunteer_activism' },
       { name: 'Profile', path: '/ProfilePage', icon: 'person' },
       { name: 'Account Settings', path: '/AccountSettings', icon: 'settings' },
@@ -408,14 +412,35 @@ $gray: rgb(90, 90, 90);
   width: 200px;
 }
 
+.transparent-nav .search-box :deep(.q-field__native) {
+  color: white;
+}
+
+.transparent-nav .search-box :deep(.q-field__control) {
+  color: white;
+}
+
+.transparent-nav .search-box :deep(.q-field__native::placeholder) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .donate-btn {
   color: #2c3539;
   text-decoration: none;
   font-weight: 800;
+  transition: color 0.3s ease;
+}
+
+.transparent-nav .donate-btn {
+  color: white;
 }
 
 .donate-btn:hover {
   color: $link-color;
+}
+
+.transparent-nav .donate-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .nav-link {
@@ -425,10 +450,19 @@ $gray: rgb(90, 90, 90);
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: color 0.3s ease;
+}
+
+.transparent-nav .nav-link {
+  color: white;
 }
 
 .nav-link:hover {
   color: $link-color;
+}
+
+.transparent-nav .nav-link:hover {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .icon-btn {
@@ -687,25 +721,22 @@ $gray: rgb(90, 90, 90);
   }
 }
 
-:deep(.q-btn-dropdown) {
-  .q-btn__content {
-    padding: 4px;
-  }
+.search-icon {
+  color: #2c3539;
+}
 
-  .q-avatar {
-    border: 2px solid #e0e0e0;
-    transition: border-color 0.2s ease;
-    background: transparent;
+.transparent-nav .search-icon {
+  color: white;
+}
 
-    &:hover {
-      border-color: #49596b;
-    }
+.notification-btn {
+  color: #2c3539;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
 
-    .avatar-img {
-      border-radius: 50%;
-      object-fit: cover;
-    }
-  }
+.transparent-nav .notification-btn {
+  color: white;
 }
 
 /* Profile Dropdown Specific */
@@ -737,6 +768,39 @@ $gray: rgb(90, 90, 90);
 
     &:last-child {
       margin-bottom: 0;
+    }
+  }
+}
+
+:deep(.q-btn-dropdown) {
+  .q-btn__content {
+    padding: 4px;
+  }
+
+  .q-avatar {
+    border: 2px solid #e0e0e0;
+    transition: border-color 0.2s ease;
+    background: transparent;
+
+    &:hover {
+      border-color: #49596b;
+    }
+
+    .avatar-img {
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+}
+
+.transparent-nav :deep(.q-btn-dropdown) {
+  color: white;
+
+  .q-avatar {
+    border-color: rgba(255, 255, 255, 0.3);
+
+    &:hover {
+      border-color: white;
     }
   }
 }

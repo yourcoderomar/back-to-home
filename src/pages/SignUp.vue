@@ -2,10 +2,7 @@
   <q-layout view="hHh lpR fFf">
     <q-page-container>
       <div class="video-wrapper">
-        <video autoplay muted loop playsinline>
-          <source src="/images/bg2-video.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        <img src="/images/egypt5.jpg" alt="Egypt Background" />
       </div>
       <NavBar :transparent="true" />
       <div class="flex flex-center full-height">
@@ -124,11 +121,24 @@ export default {
   z-index: -1;
 }
 
-.video-wrapper video {
+.video-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: brightness(80%);
+  animation: zoomEffect 20s ease-in-out infinite;
+}
+
+@keyframes zoomEffect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .full-height {

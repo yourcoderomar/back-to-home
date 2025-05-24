@@ -1,18 +1,21 @@
 <template>
   <div class="fullscreen-text">
     <span class="glow-text" :class="{ 'fully-visible': isFullyVisible }">
-      <span 
-        v-for="(char, index) in splitText" 
-        :key="index" 
-        class="char" 
+      <span
+        v-for="(char, index) in splitText"
+        :key="index"
+        class="char"
         :class="{ 'glow-hover': hoveredIndex === index }"
         :style="{ animationDelay: `${index * 0.1}s` }"
-        @mouseenter="hoveredIndex = index" 
+        @mouseenter="hoveredIndex = index"
         @mouseleave="hoveredIndex = null"
       >
-        {{ char === " " ? '\u00A0' : char }}
+        {{ char === ' ' ? '\u00A0' : char }}
       </span>
     </span>
+    <p class="subtitle" :class="{ 'fully-visible': isFullyVisible }">
+      Humanity Starts With <span class="bold-text">Back-To-Home</span>
+    </p>
   </div>
 </template>
 
@@ -20,31 +23,35 @@
 export default {
   data() {
     return {
-      text: "WE NEVER STOP CARING.",
+      text: 'WE NEVER STOP CARING.',
       isFullyVisible: false, // Controls full-text appearance
       hoveredIndex: null, // Tracks hovered letter index
-    };
+    }
   },
   computed: {
     splitText() {
-      return this.text.split(""); // Splits text into individual characters
-    }
+      return this.text.split('') // Splits text into individual characters
+    },
   },
   mounted() {
-    setTimeout(() => {
-      this.isFullyVisible = true;
-    }, this.text.length * 100 + 500); 
-  }
-};
+    setTimeout(
+      () => {
+        this.isFullyVisible = true
+      },
+      this.text.length * 100 + 500,
+    )
+  },
+}
 </script>
 
 <style scoped>
 /* Import a tall font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:ital,wght@0,100;0,400;1,400&display=swap');
 
 /* Fullscreen text settings */
 .fullscreen-text {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh; /* Full viewport height */
@@ -58,7 +65,6 @@ export default {
   letter-spacing: -0.02em; /* Reduce spacing */
   overflow: hidden;
   padding-bottom: 30vh; /* Moves text upwards */
-
 }
 
 /* Initial text appearance */
@@ -80,13 +86,16 @@ export default {
   opacity: 0;
   transform: scale(0.5);
   animation: popIn 0.4s forwards ease-out;
-  transition: text-shadow 0.3s ease-in-out, transform 0.2s ease-in-out;
+  transition:
+    text-shadow 0.3s ease-in-out,
+    transform 0.2s ease-in-out;
 }
 
 /* Stronger hover glow effect */
 .char.glow-hover {
-  text-shadow: 0 0 30px rgba(44, 53, 57, 1), 
-               0 0 50px rgba(44, 53, 57, 0.9);
+  text-shadow:
+    0 0 30px rgba(44, 53, 57, 1),
+    0 0 50px rgba(44, 53, 57, 0.9);
   transform: scale(1.3);
 }
 
@@ -106,7 +115,26 @@ export default {
   }
 }
 
+.subtitle {
+  font-size: 4vh;
+  margin-top: 2vh;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease-in-out;
+  font-weight: 100;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+}
 
+.subtitle.fully-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bold-text {
+  font-weight: 700;
+  color: #ffffff;
+}
 
 /* ✅ Responsive Typography */
 @media (max-width: 1200px) {

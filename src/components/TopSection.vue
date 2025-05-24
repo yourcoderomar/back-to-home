@@ -24,7 +24,7 @@
       >
         <div class="placeholder">
           <h1>Report</h1>
-          <p>Missing Person</p>
+          <p>Found Person</p>
         </div>
         <img src="images/4.jpg" alt="Plans image" />
       </router-link>

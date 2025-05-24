@@ -267,6 +267,10 @@ export default {
   transition: transform 0.2s ease;
 }
 
+.transparent-nav .notification-btn {
+  color: white !important;
+}
+
 .notification-btn:hover {
   transform: scale(1.1);
 }

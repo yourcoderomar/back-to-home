@@ -5,17 +5,17 @@
       <div class="footer-box">
         <h5>GET HELP</h5>
         <router-link to="/SearchReports"><p>Search Reports</p></router-link>
-        <router-link to="/ReportMissing"><p>Search Missing Person</p></router-link>
+        <router-link to="/SearchMissing"><p>Search Missing Person</p></router-link>
         <router-link to="/ReportMissing"><p>Report a Missing Person</p></router-link>
         <router-link to="/ReportFound"><p>Report a Found Person</p></router-link>
-        <router-link to="/About"><p>About Us</p></router-link>
+        <router-link to="/AboutUs"><p>About Us</p></router-link>
       </div>
       <!-- Resources -->
       <div class="footer-box">
         <h5>RESOURCES</h5>
-        <router-link to="/profile"><p>Profile</p></router-link>
-        <router-link to="/settings"><p>Settings</p></router-link>
-        <router-link to="/security"><p>Security</p></router-link>
+        <router-link to="/ProfilePage"><p>Profile</p></router-link>
+        <router-link to="/AccountSettings"><p>Settings</p></router-link>
+        <router-link to="/Security"><p>Security</p></router-link>
       </div>
 
       <!-- Contact Information -->

@@ -2,10 +2,7 @@
   <div class="page-container">
     <!-- Video Background -->
     <div class="video-wrapper">
-      <video autoplay muted loop playsinline>
-        <source src="/images/bg2-video.webm" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      <img src="/images/egypt5.jpg" alt="Egypt Background" />
     </div>
 
     <!-- Content Overlay (NavBar + BigText) -->
@@ -150,16 +147,29 @@ onMounted(() => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh; /* Covers only Nav + BigText */
+  height: 100vh;
   overflow: hidden;
   z-index: -1;
 }
 
-.video-wrapper video {
+.video-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: brightness(80%);
+  animation: zoomEffect 20s ease-in-out infinite;
+}
+
+@keyframes zoomEffect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Overlay Content (NavBar + BigText) */
