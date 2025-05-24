@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from 'src/boot/supabase'
 import NavBar from 'src/components/NavBar.vue'
 import FooterComponent from 'src/components/Footer.vue'
@@ -51,15 +51,13 @@ const fetchMatchedReports = async () => {
         )
       `,
       )
-      .or(`missing_reporter_id.eq.${user.id},found_reporter_id.eq.${user.id}`)
       .order('created_at', { ascending: false })
 
     if (fetchError) {
-      console.error('Supabase error:', fetchError)
       throw new Error('Failed to fetch matched reports')
     }
 
-    matchedReports.value = data
+    matchedReports.value = data || []
   } catch (err) {
     error.value = err.message
     if (toast.value) {
@@ -72,9 +70,17 @@ const fetchMatchedReports = async () => {
 
 // Filter reports based on user role
 const filteredReports = computed(() => {
-  if (!currentUser.value) return []
   return matchedReports.value
 })
+
+// Watch for changes in matchedReports
+watch(
+  matchedReports,
+  (newValue) => {
+    console.log('matchedReports changed:', newValue)
+  },
+  { deep: true },
+)
 
 // Format date
 const formatDate = (dateString) => {
@@ -139,7 +145,10 @@ onMounted(() => {
         </div>
 
         <!-- No Results -->
-        <div v-else-if="filteredReports.length === 0" class="no-results-container">
+        <div
+          v-if="!loading && !error && (!filteredReports || filteredReports.length === 0)"
+          class="no-results-container"
+        >
           <q-icon name="compare_arrows" size="8rem" color="grey-7" class="q-mb-xl" />
           <h2 class="text-h4 q-mb-xl">No Matched Reports</h2>
           <p class="text-subtitle1 q-mb-xl">We haven't found any matches for your reports yet.</p>
@@ -153,13 +162,13 @@ onMounted(() => {
         </div>
 
         <!-- Matched Reports List -->
-        <div v-else class="row q-col-gutter-md">
+        <div v-if="filteredReports && filteredReports.length > 0" class="row q-col-gutter-md">
           <div v-for="report in filteredReports" :key="report.id" class="col-12 col-md-6 col-lg-4">
             <q-card class="matched-report-card">
               <q-card-section class="q-pa-lg">
                 <div class="row items-center justify-between">
                   <div class="text-h6">
-                    Match for {{ report.missing_reports?.missing_person_name || 'Unknown Person' }}
+                    {{ report.missing_reports?.missing_person_name || 'Unknown Person' }}
                   </div>
                   <q-badge :color="getStatusColor(report.status)" :label="report.status" />
                 </div>
@@ -170,33 +179,43 @@ onMounted(() => {
                   <!-- Missing Person Image -->
                   <div class="col-6">
                     <q-img
+                      v-if="report.missing_image_path"
                       :src="report.missing_image_path"
                       :ratio="1"
                       class="rounded-borders"
                       spinner-color="primary"
                       spinner-size="24px"
                     />
+                    <div v-else class="placeholder-image">
+                      <q-icon name="person" size="4rem" color="grey-7" />
+                    </div>
                     <div class="text-center q-mt-md text-subtitle2 person-label">
-                      Missing Person
+                      {{ report.missing_reports?.missing_person_name || 'Unknown Missing Person' }}
                     </div>
                   </div>
 
                   <!-- Found Person Image -->
                   <div class="col-6">
                     <q-img
+                      v-if="report.found_image_path"
                       :src="report.found_image_path"
                       :ratio="1"
                       class="rounded-borders"
                       spinner-color="primary"
                       spinner-size="24px"
                     />
-                    <div class="text-center q-mt-md text-subtitle2 person-label">Found Person</div>
+                    <div v-else class="placeholder-image">
+                      <q-icon name="person" size="4rem" color="grey-7" />
+                    </div>
+                    <div class="text-center q-mt-md text-subtitle2 person-label">
+                      {{ report.found_reports?.found_person_name || 'Unknown Found Person' }}
+                    </div>
                   </div>
                 </div>
               </q-card-section>
 
               <q-card-section class="q-pa-lg">
-                <div class="text-subtitle2 q-mb-md">Match Details</div>
+                <div class="text-subtitle2">Match Details</div>
                 <q-list dense class="q-gutter-y-md">
                   <q-item>
                     <q-item-section>
@@ -484,5 +503,16 @@ onMounted(() => {
   .matched-report-card .text-h6 {
     font-size: 1.1rem;
   }
+}
+
+.placeholder-image {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
 }
 </style>
