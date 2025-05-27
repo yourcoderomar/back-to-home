@@ -47,23 +47,71 @@
 
           <div class="row q-col-gutter-md">
             <div class="col-12">
-              <q-select v-model="country" :options="countries" label="Country *" outlined dense />
+              <q-select
+                v-model="country"
+                :options="countries"
+                label="Country *"
+                outlined
+                dense
+                :rules="[(val) => !!val || 'Country is required']"
+              />
             </div>
 
             <div class="col-12 col-sm-6">
-              <q-input v-model="firstName" label="First Name *" outlined dense />
+              <q-input
+                v-model="firstName"
+                label="First Name *"
+                outlined
+                dense
+                :rules="[
+                  (val) => !!val || 'First name is required',
+                  (val) => val.length >= 2 || 'First name must be at least 2 characters',
+                  (val) => /^[a-zA-Z\s]*$/.test(val) || 'First name can only contain letters',
+                ]"
+              />
             </div>
 
             <div class="col-12 col-sm-6">
-              <q-input v-model="lastName" label="Last Name *" outlined dense />
+              <q-input
+                v-model="lastName"
+                label="Last Name *"
+                outlined
+                dense
+                :rules="[
+                  (val) => !!val || 'Last name is required',
+                  (val) => val.length >= 2 || 'Last name must be at least 2 characters',
+                  (val) => /^[a-zA-Z\s]*$/.test(val) || 'Last name can only contain letters',
+                ]"
+              />
             </div>
 
             <div class="col-12">
-              <q-input v-model="companyName" label="Company Name" outlined dense />
+              <q-input
+                v-model="companyName"
+                label="Company Name"
+                outlined
+                dense
+                :rules="[
+                  (val) => !val || val.length >= 2 || 'Company name must be at least 2 characters',
+                  (val) =>
+                    !val ||
+                    /^[a-zA-Z0-9\s]*$/.test(val) ||
+                    'Company name can only contain letters, numbers and spaces',
+                ]"
+              />
             </div>
 
             <div class="col-12">
-              <q-input v-model="address" label="Street Address *" outlined dense />
+              <q-input
+                v-model="address"
+                label="Street Address *"
+                outlined
+                dense
+                :rules="[
+                  (val) => !!val || 'Address is required',
+                  (val) => val.length >= 5 || 'Address must be at least 5 characters',
+                ]"
+              />
             </div>
 
             <div class="col-12">
@@ -72,37 +120,78 @@
                 label="Apartment, suite, unit etc. (optional)"
                 outlined
                 dense
+                :rules="[
+                  (val) => !val || val.length >= 2 || 'Apartment must be at least 2 characters',
+                ]"
               />
             </div>
 
             <div class="col-12">
-              <q-input v-model="city" label="Town / City *" outlined dense />
-            </div>
-
-            <div class="col-12 col-sm-6">
-              <q-input v-model="state" label="State / County" outlined dense />
-            </div>
-
-            <div class="col-12 col-sm-6">
-              <q-input v-model="postcode" label="Postcode / ZIP *" outlined dense />
-            </div>
-
-            <div class="col-12 col-sm-6">
-              <q-input v-model="email" label="Email Address *" outlined dense type="email" />
-            </div>
-
-            <div class="col-12 col-sm-6">
-              <q-input v-model="phone" label="Phone *" outlined dense type="tel" />
-            </div>
-
-            <div class="col-12">
               <q-input
-                v-model="notes"
-                label="Order Notes"
-                type="textarea"
+                v-model="city"
+                label="Town / City *"
                 outlined
                 dense
-                hint="Notes about your order, e.g. special notes for delivery."
+                :rules="[
+                  (val) => !!val || 'City is required',
+                  (val) => val.length >= 2 || 'City must be at least 2 characters',
+                  (val) => /^[a-zA-Z\s]*$/.test(val) || 'City can only contain letters',
+                ]"
+              />
+            </div>
+
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="state"
+                label="State / County"
+                outlined
+                dense
+                :rules="[
+                  (val) => !val || val.length >= 2 || 'State must be at least 2 characters',
+                  (val) => !val || /^[a-zA-Z\s]*$/.test(val) || 'State can only contain letters',
+                ]"
+              />
+            </div>
+
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="postcode"
+                label="Postcode / ZIP *"
+                outlined
+                dense
+                :rules="[
+                  (val) => !!val || 'Postcode is required',
+                  (val) => /^\d{5}$/.test(val) || 'Postcode must be 5 digits',
+                ]"
+              />
+            </div>
+
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="email"
+                label="Email Address *"
+                outlined
+                dense
+                type="email"
+                :rules="[
+                  (val) => !!val || 'Email is required',
+                  (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Please enter a valid email',
+                ]"
+              />
+            </div>
+
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="phone"
+                label="Phone *"
+                outlined
+                dense
+                type="tel"
+                :rules="[
+                  (val) => !!val || 'Phone is required',
+                  (val) =>
+                    /^01[0125][0-9]{8}$/.test(val) || 'Please enter a valid Egyptian phone number',
+                ]"
               />
             </div>
           </div>
@@ -203,7 +292,7 @@ export default {
     const firstName = ref('')
     const lastName = ref('')
     const companyName = ref('')
-    const country = ref('United Kingdom')
+    const country = ref('Egypt')
     const address = ref('')
     const apartment = ref('')
     const city = ref('')
@@ -211,12 +300,11 @@ export default {
     const postcode = ref('')
     const email = ref('')
     const phone = ref('')
-    const notes = ref('')
     const termsAccepted = ref(false)
     const paymentMethod = ref('bank')
     const isProcessing = ref(false)
 
-    const countries = ['United Kingdom', 'United States', 'Canada', 'Australia']
+    const countries = ['Egypt', 'United Kingdom', 'United States', 'Canada', 'Australia']
 
     const paymentOptions = [
       {
@@ -278,7 +366,6 @@ export default {
             postcode: postcode.value,
             email: email.value,
             phone: phone.value,
-            notes: notes.value,
           },
         }
 
@@ -372,7 +459,6 @@ export default {
       postcode,
       email,
       phone,
-      notes,
       termsAccepted,
       paymentMethod,
       isProcessing,

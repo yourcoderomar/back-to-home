@@ -111,7 +111,11 @@ export default {
           type: 'text',
           required: true,
           width: '100%',
-          rules: [(val) => !!val || 'Name is required'],
+          rules: [
+            (val) => !!val || 'Name is required',
+            (val) => val.length >= 2 || 'Name must be at least 2 characters',
+            (val) => /^[a-zA-Z\s]*$/.test(val) || 'Name can only contain letters and spaces',
+          ],
         },
         {
           name: 'reporter_contact',
@@ -119,7 +123,12 @@ export default {
           type: 'text',
           required: true,
           width: '100%',
-          rules: [(val) => !!val || 'Contact is required'],
+          rules: [
+            (val) => !!val || 'Contact is required',
+            (val) =>
+              /^[0-9+\-\s()]*$/.test(val) || 'Contact can only contain numbers and basic symbols',
+            (val) => val.length >= 10 || 'Contact must be at least 10 characters',
+          ],
         },
         {
           name: 'found_person_name',
@@ -127,7 +136,11 @@ export default {
           type: 'text',
           required: true,
           width: '100%',
-          rules: [(val) => !!val || 'Name is required'],
+          rules: [
+            (val) => !!val || 'Name is required',
+            (val) => val.length >= 2 || 'Name must be at least 2 characters',
+            (val) => /^[a-zA-Z\s]*$/.test(val) || 'Name can only contain letters and spaces',
+          ],
         },
         {
           name: 'age_estimate',
@@ -136,19 +149,20 @@ export default {
           width: '40%',
           rules: [
             (val) => !!val || 'Age is required',
-            (val) => (val > 0 && val < 150) || 'Enter a valid age',
+            (val) => (val > 0 && val < 150) || 'Enter a valid age between 1 and 150',
+            (val) => Number.isInteger(Number(val)) || 'Age must be a whole number',
           ],
         },
         {
           name: 'gender',
           label: 'Gender',
           type: 'select',
-          options: [
-            { label: 'Male', value: 'male' },
-            { label: 'Female', value: 'female' },
-          ],
+          options: ['male', 'female'],
           width: '40%',
-          rules: [(val) => !!val || 'Gender is required'],
+          rules: [
+            (val) => !!val || 'Gender is required',
+            (val) => ['male', 'female'].includes(val) || 'Please select a valid gender',
+          ],
           style: 'text-transform: capitalize;',
           optionsDense: true,
           optionsSelectedClass: 'text-primary',
@@ -160,23 +174,59 @@ export default {
           label: 'Found Location',
           type: 'text',
           width: '100%',
-          rules: [(val) => !!val || 'Location is required'],
+          rules: [
+            (val) => !!val || 'Location is required',
+            (val) => val.length >= 3 || 'Location must be at least 3 characters',
+            (val) =>
+              /^[a-zA-Z0-9\s,.-]*$/.test(val) ||
+              'Location can only contain letters, numbers, and basic punctuation',
+          ],
         },
         {
           name: 'found_date',
           label: 'Found Date',
           type: 'date',
           width: '100%',
-          rules: [(val) => !!val || 'Date is required'],
+          rules: [
+            (val) => !!val || 'Date is required',
+            (val) => {
+              const selectedDate = new Date(val)
+              const today = new Date()
+              return selectedDate <= today || 'Date cannot be in the future'
+            },
+          ],
         },
         {
           name: 'description',
           label: 'Description',
           type: 'textarea',
           width: '100%',
-          rules: [(val) => !!val || 'Description is required'],
+          rules: [
+            (val) => !!val || 'Description is required',
+            (val) => val.length >= 10 || 'Description must be at least 10 characters',
+            (val) => val.length <= 1000 || 'Description cannot exceed 1000 characters',
+          ],
         },
-        { name: 'photo_url', label: 'Upload Image', type: 'file', width: '100%' },
+        {
+          name: 'photo_url',
+          label: 'Upload Image',
+          type: 'file',
+          width: '100%',
+          rules: [
+            (val) => {
+              if (!val) return true // Optional field
+              const file = val
+              const validTypes = ['image/jpeg', 'image/png', 'image/jpg']
+              return validTypes.includes(file.type) || 'Only JPG, JPEG & PNG files are allowed'
+            },
+            (val) => {
+              if (!val) return true // Optional field
+              const file = val
+              const maxSize = 5 * 1024 * 1024 // 5MB
+              return file.size <= maxSize || 'File size must be less than 5MB'
+            },
+          ],
+        },
       ],
     }
   },

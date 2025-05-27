@@ -14,7 +14,12 @@
           label="National ID"
           filled
           class="q-mb-sm"
-          :rules="[(val) => !!val || 'National ID is required']"
+          :rules="[
+            (val) => !!val || 'National ID is required',
+            (val) => val.length === 14 || 'National ID must be exactly 14 digits',
+            (val) => /^\d+$/.test(val) || 'National ID must contain only numbers',
+          ]"
+          maxlength="14"
         >
           <template v-slot:prepend>
             <q-icon name="badge" />
