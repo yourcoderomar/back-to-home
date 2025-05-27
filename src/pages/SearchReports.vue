@@ -324,24 +324,26 @@
                 </q-item-section>
                 <q-item-section side>
                   <div class="row items-center q-gutter-md">
-                    <q-btn
-                      v-if="isProUser"
-                      round
-                      color="primary"
-                      icon="bookmark"
-                      size="sm"
-                      @click.stop="saveReport(report)"
-                      class="save-btn"
-                    />
-                    <q-btn
-                      v-if="report.reporter_contact"
-                      round
-                      color="primary"
-                      icon="phone"
-                      size="sm"
-                      @click.stop="callReporter(report.reporter_contact)"
-                      class="call-btn"
-                    />
+                    <div class="action-buttons">
+                      <q-btn
+                        v-if="isProUser"
+                        round
+                        :color="isReportSaved(report.id) ? 'warning' : 'primary'"
+                        :icon="isReportSaved(report.id) ? 'bookmark' : 'bookmark_border'"
+                        size="sm"
+                        @click.stop="toggleSaveReport(report)"
+                        class="action-btn save-btn"
+                      />
+                      <q-btn
+                        v-if="report.reporter_contact && report.reporter_contact.trim() !== ''"
+                        round
+                        color="primary"
+                        icon="phone"
+                        size="sm"
+                        @click.stop="callReporter(report.reporter_contact)"
+                        class="action-btn call-btn"
+                      />
+                    </div>
                     <q-img
                       v-if="report.photo_url"
                       :src="report.photo_url"
@@ -388,6 +390,7 @@ export default {
     const reports = ref([])
     const isProUser = ref(false)
     const currentStep = ref(0)
+    const savedReports = ref([])
     const searchQuery = ref({
       reportType: null,
       gender: null,
@@ -424,6 +427,17 @@ export default {
         if (error) throw error
 
         isProUser.value = data.plan.plan_name === 'pro'
+
+        if (isProUser.value) {
+          const { data: savedData, error: savedError } = await supabase
+            .from('saved_reports')
+            .select('report_id')
+            .eq('user_id', user.id)
+
+          if (!savedError && savedData) {
+            savedReports.value = savedData.map((item) => item.report_id)
+          }
+        }
       } catch (error) {
         console.error('Error checking user plan:', error)
       }
@@ -497,13 +511,22 @@ export default {
         if (specificError) throw specificError
 
         // Now let's build our search query
-        let query = supabase.from(reportTable).select('*')
+        let query = supabase.from(reportTable).select(`
+            *,
+            report:reports (
+              id,
+              created_at,
+              reporter_name,
+              reporter_contact,
+              report_status
+            )
+          `)
 
         // Apply gender filter if provided
         if (searchQuery.value.gender) {
-          // The gender is stored as a JSON string, so we need to match the value inside it
-          query = query.ilike('gender', `%"value":"${searchQuery.value.gender}"%`)
-          console.log('Applying gender filter (JSON match):', searchQuery.value.gender)
+          // Match the gender directly as a string
+          query = query.eq('gender', searchQuery.value.gender)
+          console.log('Applying gender filter:', searchQuery.value.gender)
         }
 
         // Apply age filter if provided
@@ -526,7 +549,7 @@ export default {
             const startDate = new Date(searchDate)
             startDate.setDate(startDate.getDate() - dateRange)
             const endDate = new Date(searchDate)
-            endDate.setDate(endDate.getDate() + dateRange)
+            endDate.setDate(startDate.getDate() + dateRange)
 
             query = query
               .gte('created_at', startDate.toISOString())
@@ -576,31 +599,41 @@ export default {
           if (!reports || !reports.length) return []
 
           return reports.map((report) => {
-            // Find the corresponding report from reportsData
-            const mainReport = reportsData.find((r) => r.id === report.report_id)
+            // Get the main report data from the joined table
+            const mainReport = report.report
 
             // Parse the gender JSON if it exists
             let gender = null
             try {
               if (report.gender) {
-                const genderObj = JSON.parse(report.gender)
-                gender = genderObj.value
+                // Check if the gender is already a string
+                if (typeof report.gender === 'string' && !report.gender.startsWith('{')) {
+                  gender = report.gender
+                } else {
+                  // Try to parse as JSON if it's in JSON format
+                  const genderObj = JSON.parse(report.gender)
+                  gender = genderObj.value
+                }
               }
             } catch (error) {
               console.error('Error parsing gender:', error)
+              // If parsing fails, use the gender value as is
+              gender = report.gender
             }
 
             const processedReport = {
               ...report,
-              id: mainReport?.id || report.id,
+              id: mainReport?.id || report.report_id,
               created_at: mainReport?.created_at || report.created_at,
-              reporter_contact: mainReport?.reporter_contact,
-              reporter_name: mainReport?.reporter_name,
+              reporter_contact: mainReport?.reporter_contact || report.reporter_contact,
+              reporter_name: mainReport?.reporter_name || report.reporter_name,
               status: mainReport?.report_status || report.status,
               name: report.missing_person_name || report.found_person_name,
               photo_url: report.photo_url,
-              gender: gender, // Add the parsed gender
+              gender: gender,
             }
+
+            console.log('Processed report contact:', processedReport.reporter_contact)
 
             // Process photo URL if it exists
             if (processedReport.photo_url && !processedReport.photo_url.startsWith('http')) {
@@ -730,6 +763,57 @@ export default {
       }
     }
 
+    const isReportSaved = (reportId) => {
+      return savedReports.value.includes(reportId)
+    }
+
+    const toggleSaveReport = async (report) => {
+      if (!isProUser.value) {
+        toastRef.value?.showToast('This feature is only available for Pro users', 'warning')
+        return
+      }
+
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+        if (authError || !user) throw authError
+
+        const reportId = report.id
+        const isSaved = isReportSaved(reportId)
+
+        if (!isSaved) {
+          // Save the report
+          const { error } = await supabase.from('saved_reports').insert([
+            {
+              user_id: user.id,
+              report_id: reportId,
+              report_type: report.missing_person_name ? 'missing' : 'found',
+              created_at: new Date().toISOString(),
+            },
+          ])
+
+          if (error) throw error
+          savedReports.value.push(reportId)
+          toastRef.value?.showToast('Report saved successfully!', 'success')
+        } else {
+          // Unsave the report
+          const { error } = await supabase.from('saved_reports').delete().match({
+            report_id: reportId,
+            user_id: user.id,
+          })
+
+          if (error) throw error
+          savedReports.value = savedReports.value.filter((id) => id !== reportId)
+          toastRef.value?.showToast('Report removed from saved', 'success')
+        }
+      } catch (error) {
+        console.error('Error toggling save status:', error)
+        toastRef.value?.showToast('Failed to update save status', 'error')
+      }
+    }
+
     onMounted(checkUserPlan)
 
     return {
@@ -757,6 +841,8 @@ export default {
       callReporter,
       resetSearch,
       isProUser,
+      isReportSaved,
+      toggleSaveReport,
     }
   },
 }
@@ -1429,6 +1515,53 @@ export default {
 
 .mobile-progress-toggle {
   display: none;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  transition: all 0.3s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.save-btn {
+  background: #1976d2;
+}
+
+.save-btn:hover {
+  background: #1565c0;
+}
+
+.call-btn {
+  background: #4caf50;
+}
+
+.call-btn:hover {
+  background: #43a047;
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    gap: 4px;
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .action-btn .q-icon {
+    font-size: 16px;
+  }
 }
 </style>
 

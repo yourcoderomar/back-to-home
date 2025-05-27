@@ -2,7 +2,7 @@
   <div class="notification-container">
     <!-- Notification Bell Button -->
     <q-btn class="notification-btn" dense flat icon="notifications" @click="toggleNotifications">
-      <q-badge v-if="notifications.length" floating color="red">{{ notifications.length }}</q-badge>
+      <q-badge v-if="unreadCount" floating color="red">{{ unreadCount }}</q-badge>
     </q-btn>
 
     <!-- Notification Dropdown -->
@@ -13,20 +13,37 @@
           <q-btn flat dense icon="close" @click="toggleNotifications" />
         </div>
 
-        <div v-if="notifications.length" class="notification-list">
-          <div v-for="notif in notifications" :key="notif.id" class="notification-item">
-            <q-icon :name="icons[notif.type]" class="icon" />
-            <span class="message">{{ notif.message }}</span>
+        <div v-if="loading" class="loading-state">
+          <q-spinner color="primary" size="2em" />
+          <span>Loading notifications...</span>
+        </div>
+
+        <div v-else-if="notifications.length" class="notification-list">
+          <div
+            v-for="notif in notifications"
+            :key="notif.id"
+            class="notification-item"
+            :class="{ unread: !notif.read }"
+            @click="markAsRead(notif.id)"
+          >
+            <q-icon :name="icons[notif.type]" class="icon" :class="notif.type" />
+            <div class="notification-content">
+              <span class="message">{{ notif.message }}</span>
+              <span class="timestamp">{{ formatTimeAgo(notif.created_at) }}</span>
+            </div>
             <q-btn
               flat
               dense
               icon="close"
               class="delete-btn"
-              @click="deleteNotification(notif.id)"
+              @click.stop="deleteNotification(notif.id)"
             />
           </div>
         </div>
-        <div v-else class="empty-message">No new notifications</div>
+        <div v-else class="empty-message">
+          <q-icon name="notifications_off" size="2em" color="grey-6" />
+          <span>No new notifications</span>
+        </div>
 
         <q-btn v-if="notifications.length" flat dense class="clear-btn" @click="clearNotifications">
           Clear All
@@ -37,15 +54,16 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { supabase } from 'src/boot/supabase'
 
 export default {
   setup() {
     const showNotifications = ref(false)
     const notifications = ref([])
+    const loading = ref(false)
     let subscription = null
-    const userId = ref(null) // Store logged-in user ID
+    const userId = ref(null)
 
     const icons = {
       success: 'check_circle',
@@ -54,32 +72,58 @@ export default {
       info: 'info',
     }
 
-    // 🔹 Fetch notifications for the logged-in user
-    const fetchNotifications = async () => {
-      console.log('Fetching notifications...')
+    const unreadCount = computed(() => {
+      return notifications.value.filter((notif) => !notif.read).length
+    })
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
-      if (userError || !user) {
-        console.error('User authentication error:', userError)
-        return
+    const formatTimeAgo = (date) => {
+      const now = new Date()
+      const notifDate = new Date(date)
+      const diffInSeconds = Math.floor((now - notifDate) / 1000)
+
+      if (diffInSeconds < 60) return 'Just now'
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+      return notifDate.toLocaleDateString()
+    }
+
+    const markAsRead = async (id) => {
+      const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id)
+
+      if (!error) {
+        notifications.value = notifications.value.map((notif) =>
+          notif.id === id ? { ...notif, read: true } : notif,
+        )
       }
+    }
 
-      userId.value = user.id // Store user ID
+    const fetchNotifications = async () => {
+      loading.value = true
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+        if (userError || !user) {
+          console.error('User authentication error:', userError)
+          return
+        }
 
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id) // Fetch only the current user's notifications
-        .order('created_at', { ascending: false })
+        userId.value = user.id
 
-      if (error) {
-        console.error('Error fetching notifications:', error.message)
-      } else {
-        console.log('Notifications fetched:', data)
-        notifications.value = data
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching notifications:', error.message)
+        } else {
+          notifications.value = data
+        }
+      } finally {
+        loading.value = false
       }
     }
 
@@ -163,6 +207,10 @@ export default {
       deleteNotification,
       clearNotifications,
       icons,
+      loading,
+      unreadCount,
+      markAsRead,
+      formatTimeAgo,
     }
   },
 }
@@ -237,11 +285,16 @@ export default {
 
 .notification-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 12px 16px;
   font-size: 14px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.notification-item.unread {
+  background-color: #f0f7ff;
 }
 
 .notification-item:hover {
@@ -259,6 +312,11 @@ export default {
   flex-grow: 1;
   line-height: 1.4;
   color: #2c3539;
+}
+
+.notification-item .timestamp {
+  font-size: 12px;
+  color: #6c757d;
 }
 
 .notification-btn {
@@ -301,8 +359,12 @@ export default {
 
 /* Empty Message */
 .empty-message {
-  padding: 24px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 12px;
   color: #6c757d;
   font-size: 14px;
 }
@@ -341,5 +403,40 @@ export default {
   padding: 2px 6px;
   border-radius: 10px;
   font-weight: 600;
+}
+
+.notification-content {
+  flex-grow: 1;
+  margin-right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 12px;
+  color: #6c757d;
+}
+
+/* Notification type colors */
+.notification-item .icon.success {
+  color: #28a745;
+}
+
+.notification-item .icon.error {
+  color: #dc3545;
+}
+
+.notification-item .icon.warning {
+  color: #ffc107;
+}
+
+.notification-item .icon.info {
+  color: #007bff;
 }
 </style>

@@ -28,7 +28,7 @@
         <p ref="ctaParagraph" style="opacity: 0">
           Contact us and we'll help you choose the right plan!
         </p>
-        <q-btn size="lg" label="Get in Touch" to="/contact" class="btn" />
+        <q-btn size="lg" label="Get in Touch" to="/contact-us" class="btn" />
       </div>
 
       <HeroSection title="FAQ" subtitle="" style="border-bottom: 0px" />

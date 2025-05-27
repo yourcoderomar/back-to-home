@@ -235,4 +235,52 @@ export default {
 .submit .q-spinner {
   color: white;
 }
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.form-message {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+:deep(.gender-popup-width) {
+  min-width: 100px !important;
+  max-width: 200px !important;
+}
+
+:deep(.q-field__native) {
+  min-width: 0;
+}
+
+:deep(.q-field__control) {
+  min-width: 0;
+}
+
+:deep(.q-field__marginal) {
+  min-width: 0;
+}
+
+:deep(.q-field__native > span) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 </style>

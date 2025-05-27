@@ -48,10 +48,10 @@
             <q-icon name="card_membership" /> Subscriptions
           </router-link>
           <router-link to="/ReportMissing" class="nav-link">
-            <q-icon name="report" /> Report
+            <q-icon name="report" /> Found
           </router-link>
           <router-link to="/SearchMissing" class="nav-link">
-            <q-icon name="search" /> Find
+            <q-icon name="search" /> Missing
           </router-link>
           <router-link to="/SearchReports" class="nav-link">
             <q-icon name="description" /> Browse
@@ -79,14 +79,18 @@
               <img :src="userAvatar" alt="User Avatar" class="avatar-img" />
             </q-avatar>
           </template>
-          <q-list>
-            <q-item clickable v-close-popup @click="goToProfile">
+          <q-list class="profile-menu">
+            <q-item clickable v-close-popup @click="goToProfile" class="menu-item">
               <q-item-section avatar>
-                <q-icon name="person" />
+                <q-icon name="person" color="primary" />
               </q-item-section>
-              <q-item-section>Profile</q-item-section>
+              <q-item-section>
+                <q-item-label>Profile</q-item-label>
+                <q-item-label caption>View your profile</q-item-label>
+              </q-item-section>
             </q-item>
-            <q-item clickable v-close-popup @click="goToSavedReports">
+
+            <q-item clickable v-close-popup @click="goToSavedReports" class="menu-item">
               <q-item-section avatar>
                 <q-icon name="bookmark" :color="userPlan === 2 ? 'primary' : 'grey'">
                   <q-tooltip v-if="userPlan !== 2" class="bg-grey-8">
@@ -94,14 +98,22 @@
                   </q-tooltip>
                 </q-icon>
               </q-item-section>
-              <q-item-section>Saved Reports</q-item-section>
-            </q-item>
-            <q-separator />
-            <q-item clickable v-close-popup @click="handleLogout" class="text-negative">
-              <q-item-section avatar>
-                <q-icon name="logout" />
+              <q-item-section>
+                <q-item-label>Saved Reports</q-item-label>
+                <q-item-label caption>View your saved items</q-item-label>
               </q-item-section>
-              <q-item-section>Logout</q-item-section>
+            </q-item>
+
+            <q-separator />
+
+            <q-item clickable v-close-popup @click="handleLogout" class="menu-item text-negative">
+              <q-item-section avatar>
+                <q-icon name="logout" color="negative" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Logout</q-item-label>
+                <q-item-label caption>Sign out of your account</q-item-label>
+              </q-item-section>
             </q-item>
           </q-list>
         </q-btn-dropdown>
@@ -115,18 +127,25 @@
               :style="{ color: isTransparent ? 'white' : '#2c3539' }"
             />
           </template>
-          <q-list>
-            <q-item clickable v-close-popup @click="goToSignIn">
+          <q-list class="auth-menu">
+            <q-item clickable v-close-popup @click="goToSignIn" class="menu-item">
               <q-item-section avatar>
-                <q-icon name="login" />
+                <q-icon name="login" color="primary" />
               </q-item-section>
-              <q-item-section>Sign In</q-item-section>
+              <q-item-section>
+                <q-item-label>Sign In</q-item-label>
+                <q-item-label caption>Access your account</q-item-label>
+              </q-item-section>
             </q-item>
-            <q-item clickable v-close-popup @click="goToSignUp">
+
+            <q-item clickable v-close-popup @click="goToSignUp" class="menu-item">
               <q-item-section avatar>
-                <q-icon name="person_add" />
+                <q-icon name="person_add" color="primary" />
               </q-item-section>
-              <q-item-section>Sign Up</q-item-section>
+              <q-item-section>
+                <q-item-label>Sign Up</q-item-label>
+                <q-item-label caption>Create new account</q-item-label>
+              </q-item-section>
             </q-item>
           </q-list>
         </q-btn-dropdown>
@@ -682,26 +701,31 @@ $gray: rgb(90, 90, 90);
 /* Enhanced Dropdown Styling */
 :deep(.q-menu) {
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 8px;
-  min-width: 200px;
+  min-width: 280px;
+  background: #ffffff;
 }
 
-:deep(.q-item) {
+:deep(.profile-menu),
+:deep(.auth-menu) {
+  padding: 4px;
+}
+
+:deep(.menu-item) {
   border-radius: 8px;
   margin: 4px 0;
-  min-height: 48px;
-  padding: 8px 16px;
+  min-height: 56px;
+  padding: 8px 12px;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: #f5f7fa;
+    background-color: #f8f9fa;
   }
 
   .q-item__section--avatar {
     min-width: 40px;
-    color: #49596b;
   }
 
   .q-icon {
@@ -712,13 +736,80 @@ $gray: rgb(90, 90, 90);
     font-size: 14px;
     font-weight: 500;
     color: #2c3539;
+    line-height: 1.2;
   }
 
-  .q-tooltip {
+  .q-item__label--caption {
     font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 4px;
+    color: #6c757d;
+    margin-top: 2px;
   }
+
+  &.text-negative {
+    .q-item__label,
+    .q-item__label--caption {
+      color: #dc3545;
+    }
+  }
+}
+
+:deep(.q-separator) {
+  margin: 8px 0;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Profile Dropdown Specific */
+:deep(.profile-dropdown) {
+  .q-avatar {
+    border: 2px solid #e0e0e0;
+    transition: all 0.2s ease;
+    background: transparent;
+
+    &:hover {
+      border-color: #49596b;
+      transform: scale(1.05);
+    }
+
+    .avatar-img {
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+}
+
+/* Sign In/Up Dropdown Specific */
+:deep(.auth-dropdown) {
+  .q-icon {
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+}
+
+.transparent-nav {
+  :deep(.q-btn-dropdown) {
+    color: white;
+
+    .q-avatar {
+      border-color: rgba(255, 255, 255, 0.3);
+
+      &:hover {
+        border-color: white;
+      }
+    }
+  }
+}
+
+/* Tooltip Styling */
+:deep(.q-tooltip) {
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #2c3539;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .search-icon {
@@ -737,71 +828,5 @@ $gray: rgb(90, 90, 90);
 
 .transparent-nav .notification-btn {
   color: white;
-}
-
-/* Profile Dropdown Specific */
-:deep(.profile-dropdown) {
-  .q-item {
-    &:first-child {
-      margin-top: 0;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    &.text-negative {
-      color: #c62828;
-      .q-icon {
-        color: #c62828;
-      }
-    }
-  }
-}
-
-/* Sign In/Up Dropdown Specific */
-:deep(.auth-dropdown) {
-  .q-item {
-    &:first-child {
-      margin-top: 0;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-}
-
-:deep(.q-btn-dropdown) {
-  .q-btn__content {
-    padding: 4px;
-  }
-
-  .q-avatar {
-    border: 2px solid #e0e0e0;
-    transition: border-color 0.2s ease;
-    background: transparent;
-
-    &:hover {
-      border-color: #49596b;
-    }
-
-    .avatar-img {
-      border-radius: 50%;
-      object-fit: cover;
-    }
-  }
-}
-
-.transparent-nav :deep(.q-btn-dropdown) {
-  color: white;
-
-  .q-avatar {
-    border-color: rgba(255, 255, 255, 0.3);
-
-    &:hover {
-      border-color: white;
-    }
-  }
 }
 </style>

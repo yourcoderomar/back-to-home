@@ -142,10 +142,7 @@ export default {
           name: 'gender',
           label: 'Gender',
           type: 'select',
-          options: [
-            { label: 'Male', value: 'male' },
-            { label: 'Female', value: 'female' },
-          ],
+          options: ['Male', 'Female'],
           width: '40%',
           rules: [(val) => !!val || 'Gender is required'],
           style: 'text-transform: capitalize;',

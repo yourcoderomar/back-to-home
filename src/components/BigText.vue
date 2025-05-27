@@ -58,13 +58,13 @@ export default {
   width: 100vw; /* Full viewport width */
   color: #f2f0e9;
   font-family: 'Anton', sans-serif; /* Use a tall font */
-  font-size: 14vh; /* Maximum height */
+  font-size: clamp(2rem, 14vw, 14vh); /* Responsive font size */
   font-weight: bold;
   text-align: center;
   line-height: 1; /* Prevent extra spacing */
   letter-spacing: -0.02em; /* Reduce spacing */
   overflow: hidden;
-  padding-bottom: 30vh; /* Moves text upwards */
+  padding-bottom: clamp(5vh, 30vw, 30vh); /* Responsive padding */
 }
 
 /* Initial text appearance */
@@ -116,14 +116,17 @@ export default {
 }
 
 .subtitle {
-  font-size: 4vh;
-  margin-top: 2vh;
+  font-size: clamp(1.5rem, 4vw, 4vh);
+  margin-top: clamp(1rem, 2vw, 2vh);
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.8s ease-in-out;
   font-weight: 100;
   font-family: 'Playfair Display', serif;
   font-style: italic;
+  text-align: center;
+  padding: 0 1rem;
+  max-width: 90vw;
 }
 
 .subtitle.fully-visible {
@@ -134,34 +137,61 @@ export default {
 .bold-text {
   font-weight: 700;
   color: #ffffff;
+  display: inline-block;
 }
 
 /* ✅ Responsive Typography */
 @media (max-width: 1200px) {
   .fullscreen-text {
-    font-size: 13vh;
-    padding-bottom: 15vh;
+    font-size: clamp(2rem, 13vw, 13vh);
+    padding-bottom: clamp(4vh, 15vw, 15vh);
+  }
+  .subtitle {
+    font-size: clamp(1.2rem, 3.5vw, 3.5vh);
   }
 }
 
 @media (max-width: 992px) {
   .fullscreen-text {
-    font-size: 12vh;
-    padding-bottom: 12vh;
+    font-size: clamp(1.8rem, 12vw, 12vh);
+    padding-bottom: clamp(3vh, 12vw, 12vh);
+  }
+  .subtitle {
+    font-size: clamp(1.1rem, 3vw, 3vh);
   }
 }
 
 @media (max-width: 768px) {
   .fullscreen-text {
-    font-size: 8vh;
-    padding-bottom: 10vh;
+    font-size: clamp(1.5rem, 8vw, 8vh);
+    padding-bottom: clamp(2vh, 10vw, 10vh);
+  }
+  .subtitle {
+    font-size: clamp(1rem, 2.5vw, 2.5vh);
+    margin-top: 1.5vh;
   }
 }
 
 @media (max-width: 480px) {
   .fullscreen-text {
-    font-size: 4vh;
-    padding-bottom: 5vh;
+    font-size: clamp(1.2rem, 4vw, 4vh);
+    padding-bottom: clamp(1vh, 5vw, 5vh);
+  }
+  .subtitle {
+    font-size: clamp(0.9rem, 2vw, 2vh);
+    margin-top: 1vh;
+  }
+}
+
+/* Add support for very small screens */
+@media (max-width: 320px) {
+  .fullscreen-text {
+    font-size: clamp(1rem, 3vw, 3vh);
+    padding-bottom: clamp(0.8vh, 3vw, 3vh);
+  }
+  .subtitle {
+    font-size: clamp(0.8rem, 1.8vw, 1.8vh);
+    margin-top: 0.8vh;
   }
 }
 </style>

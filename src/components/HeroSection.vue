@@ -10,30 +10,30 @@
 
 <script>
 export default {
-  name: "ReusableHero",
+  name: 'ReusableHero',
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     subtitle: {
       type: String,
-      required: true
+      required: true,
     },
     buttonText: {
       type: String,
-      default: null
+      default: null,
     },
     buttonLink: {
       type: String,
-      default: "#"
+      default: '#',
     },
     backgroundGradient: {
       type: String,
-      default: "linear-gradient(135deg, #2c2c2c, #121212)"
-    }
-  }
-};
+      default: 'linear-gradient(135deg, #2c2c2c, #121212)',
+    },
+  },
+}
 </script>
 
 <style scoped>
@@ -43,7 +43,7 @@ export default {
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #2C3539;
+  color: #2c3539;
   padding: 3rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding: 0px;
@@ -67,7 +67,7 @@ export default {
   .hero-content h1 {
     font-size: 5vw;
   }
-  
+
   .hero-content p {
     font-size: 2vw;
   }
@@ -77,7 +77,7 @@ export default {
   .hero-content h1 {
     font-size: 6vw;
   }
-  
+
   .hero-content p {
     font-size: 2.5vw;
   }
@@ -87,7 +87,7 @@ export default {
   .hero-content h1 {
     font-size: 8vw;
   }
-  
+
   .hero-content p {
     font-size: 3vw;
   }
