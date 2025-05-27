@@ -163,22 +163,22 @@ export default {
 
 @media (max-width: 768px) {
   .fullscreen-text {
-    font-size: clamp(1.5rem, 8vw, 8vh);
+    font-size: clamp(2rem, 10vw, 10vh);
     padding-bottom: clamp(2vh, 10vw, 10vh);
   }
   .subtitle {
-    font-size: clamp(1rem, 2.5vw, 2.5vh);
+    font-size: clamp(0.8rem, 2vw, 2vh);
     margin-top: 1.5vh;
   }
 }
 
 @media (max-width: 480px) {
   .fullscreen-text {
-    font-size: clamp(1.2rem, 4vw, 4vh);
+    font-size: clamp(1.8rem, 6vw, 6vh);
     padding-bottom: clamp(1vh, 5vw, 5vh);
   }
   .subtitle {
-    font-size: clamp(0.9rem, 2vw, 2vh);
+    font-size: clamp(0.7rem, 1.5vw, 1.5vh);
     margin-top: 1vh;
   }
 }
@@ -186,11 +186,11 @@ export default {
 /* Add support for very small screens */
 @media (max-width: 320px) {
   .fullscreen-text {
-    font-size: clamp(1rem, 3vw, 3vh);
+    font-size: clamp(1.5rem, 4vw, 4vh);
     padding-bottom: clamp(0.8vh, 3vw, 3vh);
   }
   .subtitle {
-    font-size: clamp(0.8rem, 1.8vw, 1.8vh);
+    font-size: clamp(0.6rem, 1.2vw, 1.2vh);
     margin-top: 0.8vh;
   }
 }
