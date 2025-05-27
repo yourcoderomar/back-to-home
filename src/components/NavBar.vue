@@ -532,7 +532,12 @@ $gray: rgb(90, 90, 90);
   border-radius: 3px;
   transition:
     transform 0.3s ease-in-out,
-    opacity 0.3s ease-in-out;
+    opacity 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
+}
+
+.transparent-nav .burger-icon div {
+  background-color: white;
 }
 
 /* 🔥 Smooth "X" Animation */
