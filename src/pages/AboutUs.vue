@@ -15,27 +15,27 @@ const teamText =
 const teamMembers = ref([
   {
     name: 'Team Member 1',
-    image: '/images/omar2.jpg',
+    image: '/images/omar.jpg',
   },
   {
     name: 'Team Member 2',
-    image: '/images/omar.jpg',
+    image: '/images/jannah.jpg',
   },
   {
     name: 'Team Member 3',
-    image: '/images/omar.jpg',
+    image: '/images/ashraf.jpg',
   },
   {
     name: 'Team Member 4',
-    image: '/images/omar.jpg',
+    image: '/images/jana.jpg',
   },
   {
     name: 'Team Member 5',
-    image: '/images/omar.jpg',
+    image: '/images/rokia.jpg',
   },
   {
     name: 'Team Member 6',
-    image: '/images/omar.jpg',
+    image: '/images/jelly.jpg',
   },
 ])
 
