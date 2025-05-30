@@ -20,8 +20,26 @@
               @error="handleImageError"
             />
           </div>
-          <!-- Duplicate set of images for seamless loop -->
+          <!-- Second set of images -->
           <div v-for="(image, index) in images" :key="'second-' + index" class="carousel-item">
+            <img
+              :src="image"
+              alt="Missing Person"
+              class="carousel-image"
+              @error="handleImageError"
+            />
+          </div>
+          <!-- Third set of images -->
+          <div v-for="(image, index) in images" :key="'third-' + index" class="carousel-item">
+            <img
+              :src="image"
+              alt="Missing Person"
+              class="carousel-image"
+              @error="handleImageError"
+            />
+          </div>
+          <!-- Fourth set of images -->
+          <div v-for="(image, index) in images" :key="'fourth-' + index" class="carousel-item">
             <img
               :src="image"
               alt="Missing Person"
@@ -143,6 +161,7 @@ export default {
   animation: scroll 30s linear infinite;
   gap: 1rem;
   padding: 0 1rem;
+  width: 400%;
 }
 
 /* 📸 Image Containers */
@@ -153,6 +172,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .carousel-image {
@@ -181,7 +201,7 @@ export default {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / 4));
   }
 }
 
@@ -192,7 +212,7 @@ export default {
     height: 250px;
   }
   .carousel-track {
-    animation: scroll 20s linear infinite;
+    animation: scroll 40s linear infinite;
   }
 }
 
@@ -202,7 +222,7 @@ export default {
     height: 200px;
   }
   .carousel-track {
-    animation: scroll 15s linear infinite;
+    animation: scroll 30s linear infinite;
   }
   .text-container {
     margin-top: 1.5rem;
