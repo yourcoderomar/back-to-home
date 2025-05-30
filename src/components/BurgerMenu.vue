@@ -194,6 +194,7 @@ export default {
   padding: 16px;
   background: #f8f9fa;
   border-bottom: 1px solid #eee;
+  position: relative;
 
   .search-box {
     width: 100%;
@@ -280,6 +281,7 @@ export default {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid #eee;
+  display: block;
 
   .no-results {
     padding: 16px;
