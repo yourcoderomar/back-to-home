@@ -76,12 +76,17 @@ export default {
       {
         title: 'Starter',
         price: 0,
-        features: ['Basic Analytics', 'Limited Access', 'Community Support'],
+        features: ['Basic Analytics', 'Limited Access', 'Community Support', 'Limited Reports'],
       },
       {
         title: 'Pro',
         price: 400,
-        features: ['Advanced Analytics', 'Priority Support', 'Custom Reports'],
+        features: [
+          'Advanced Analytics',
+          'Priority Support',
+          'Community Support',
+          'AI-powered search',
+        ],
       },
     ]
 
